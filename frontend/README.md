@@ -1,1 +1,1 @@
-# E Tournament Frontend
+# E Tournaments Frontend
