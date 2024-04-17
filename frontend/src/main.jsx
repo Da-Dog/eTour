@@ -11,7 +11,7 @@ import Home from "./home.jsx";
 import Login from "./login.jsx";
 import Player from "./player.jsx";
 import Tournaments from "./tournaments.jsx";
-import TournamentManager from "./tournament-manager.jsx";
+import TournamentManagerHome from "./tournament-manager/home";
 
 const router = createBrowserRouter([
     {
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
     },
     {
         path: '/admin',
-        element: <TournamentManager/>,
+        element: <TournamentManagerHome/>,
     },
     {
         path: '/player',

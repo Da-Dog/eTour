@@ -24,7 +24,7 @@ export const login = async (email, password) => {
 
 export const refresh = async () => {
     const refreshToken = Cookies.get('refresh');
-    console.log(refreshToken);
+
     if (!refreshToken) {
         return false;
     }
@@ -45,4 +45,3 @@ export const refresh = async () => {
         })
     return success;
 }
-
