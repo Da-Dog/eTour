@@ -11,7 +11,7 @@ class Tournament(models.Model):
     end_date = models.DateTimeField()
 
     address_1 = models.CharField(max_length=100)
-    address_2 = models.CharField(max_length=100)
+    address_2 = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=32)
     state = models.CharField(max_length=16)
     zip_code = models.CharField(max_length=10)
@@ -19,6 +19,7 @@ class Tournament(models.Model):
     contact_name = models.CharField(max_length=100)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=20)
+    owner = models.ForeignKey('auth.User', related_name='tournaments', on_delete=models.CASCADE)
 
     create_time = models.DateTimeField(auto_now_add=True)
     last_update_time = models.DateTimeField(auto_now=True)
