@@ -13,6 +13,7 @@ export const login = async (email, password) => {
             if (data.access) {
                 Cookies.set('token', data.access);
                 Cookies.set('refresh', data.refresh);
+                Cookies.set('last_refresh', Date.now());
             } else {
                 throw new Error(data.detail);
             }
@@ -40,6 +41,7 @@ export const refresh = async () => {
         .then(data => {
             if (data.access) {
                 Cookies.set('token', data.access);
+                Cookies.set('last_refresh', Date.now());
                 success = true;
             }
         })

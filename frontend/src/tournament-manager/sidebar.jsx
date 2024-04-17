@@ -1,5 +1,4 @@
 import {Box, Button, Image, VStack} from "@chakra-ui/react";
-import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {refresh} from "../api.jsx";
 import {
@@ -11,6 +10,7 @@ import {
     FaTachometerAlt
 } from "react-icons/fa";
 import Cookies from "js-cookie";
+import {useEffect} from "react";
 
 function Logout() {
     // remove all cookies and redirect to home page
@@ -19,16 +19,25 @@ function Logout() {
     window.location.href = "/";
 }
 
-function Sidebar() {
-    const navigate = useNavigate();
-
-    useEffect(() => {
+function refreshCheck(navigate) {
+    if (!Cookies.get("last_refresh") || Cookies.get("last_refresh") <= Date.now() - 1000 * 60 * 4) {
         refresh().then(success => {
             if (!success) {
                 navigate('/login');
             }
         });
-    }, [navigate]);
+    }
+}
+
+function Sidebar() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        refreshCheck(navigate);
+        setInterval(() => {
+            refreshCheck(navigate);
+        }, 1000 * 60);
+    }, []);
 
     return (
         <Box w="250px" h="100vh" bg="white">
