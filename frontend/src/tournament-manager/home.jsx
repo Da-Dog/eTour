@@ -6,13 +6,13 @@ import {
     CardFooter,
     Divider,
     Flex,
-    Heading,
+    Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
     SimpleGrid,
     Stack,
-    Text
+    Text, useDisclosure
 } from "@chakra-ui/react";
 import Sidebar from "./sidebar.jsx";
-import {getTournamentList} from "../api.jsx";
+import {deleteTournament, getTournamentList} from "../api.jsx";
 import {useEffect, useState} from "react";
 import {FaCalendarCheck, FaCalendarDay, FaEdit, FaFileAlt, FaTrashAlt} from "react-icons/fa";
 import {useOutlet, useNavigate} from "react-router-dom";
@@ -22,8 +22,27 @@ function TournamentManagerHome() {
     const [upcomingTournament, setUpcomingTournament] = useState([]);
     const [pastTournament, setPastTournament] = useState([]);
 
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const [selectedTournament, setSelectedTournament] = useState([]);
+
     const navigate = useNavigate();
     const outlet = useOutlet();
+
+    function openDeleteModal(tournament, name) {
+        setSelectedTournament([tournament, name]);
+        onOpen();
+    }
+
+    function handleDelete() {
+        deleteTournament(selectedTournament[0]).then(() => {
+            onClose();
+            getTournamentList().then((response) => {
+                setUsername(response.user);
+                setUpcomingTournament(response.upcoming);
+                setPastTournament(response.past);
+            });
+        });
+    }
 
     useEffect( () => {
         if (!outlet) {
@@ -37,6 +56,24 @@ function TournamentManagerHome() {
 
     return (
         <Box bg={"gray.100"} w="100%" h="100vh">
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Delete Tournament</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        Are you sure you want to delete the tournament <b>{selectedTournament[1] ? selectedTournament[1] : ''}</b>?
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button colorScheme="red" mr={3} onClick={handleDelete}>
+                            Delete
+                        </Button>
+                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
             <Box pl="250px" overflowY="auto" maxHeight="100vh">
                 <Sidebar isSidebarDisabled={true}/>
                 {outlet || (
@@ -81,7 +118,7 @@ function TournamentManagerHome() {
                                         <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
                                             Edit
                                         </Button>
-                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>
                                             Delete
                                         </Button>
                                         <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>
@@ -126,7 +163,7 @@ function TournamentManagerHome() {
                                         <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
                                             Edit
                                         </Button>
-                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>
                                             Delete
                                         </Button>
                                         <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>

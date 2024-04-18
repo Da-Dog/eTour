@@ -97,3 +97,20 @@ export const createTournament = async (name, description, startDate, endDate, ad
         return await response.json();
     }
 }
+
+export const deleteTournament = async (id) => {
+    let token = Cookies.get('token');
+    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        alert("Failed to delete tournament");
+    } else {
+        alert("Tournament deleted successfully");
+    }
+}
