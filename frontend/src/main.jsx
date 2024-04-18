@@ -10,7 +10,8 @@ import Home from "./home.jsx";
 import Login from "./login.jsx";
 import Player from "./player.jsx";
 import Tournaments from "./tournaments.jsx";
-import TournamentManagerHome from "./tournament-manager/home";
+import TournamentManagerHome from "./tournament-manager/home.jsx";
+import CreateTournament from "./tournament-manager/createTournament.jsx";
 
 const router = createBrowserRouter([
     {
@@ -24,6 +25,12 @@ const router = createBrowserRouter([
     {
         path: '/tm',
         element: <TournamentManagerHome/>,
+        children: [
+            {
+                path: 'new',
+                element: <CreateTournament/>,
+            },
+        ],
     },
     {
         path: '/player',

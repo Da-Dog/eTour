@@ -13,7 +13,6 @@ import Cookies from "js-cookie";
 import {useEffect} from "react";
 
 function Logout() {
-    // remove all cookies and redirect to home page
     Cookies.remove("token");
     Cookies.remove("refresh");
     window.location.href = "/";
@@ -37,7 +36,7 @@ function Sidebar({isSidebarDisabled}) {
         setInterval(() => {
             refreshCheck(navigate);
         }, 1000 * 60);
-    }, []);
+    });
 
     return (
         <Box w="250px" h="100vh" bg="white" position="absolute" left="0" top="0">
