@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
@@ -37,11 +36,18 @@ def home(request):
 
 @api.get("/tournament", auth=JWTAuth())
 def tournament_list(request):
-    upcoming_tournaments = list(Tournament.objects.filter(end_date__gte=timezone.now(), owner=request.user).values("id", "name",
+    current_time = datetime.fromtimestamp(int(request.META.get('HTTP_CURRENT_TIME'))/1000.0)
+    upcoming_tournaments = list(Tournament.objects.filter(end_date__gte=current_time, owner=request.user).values("id", "name",
                                                                                                  "start_date",
                                                                                                  "end_date"))
-    past_tournaments = list(Tournament.objects.filter(end_date__lt=timezone.now(), owner=request.user).values("id", "name", "start_date",
+    past_tournaments = list(Tournament.objects.filter(end_date__lt=current_time, owner=request.user).values("id", "name", "start_date",
                                                                                             "end_date"))
+    for i in upcoming_tournaments:
+        i["start_date"] = i["start_date"].strftime("%Y-%m-%d %H:%M")
+        i["end_date"] = i["end_date"].strftime("%Y-%m-%d %H:%M")
+    for i in past_tournaments:
+        i["start_date"] = i["start_date"].strftime("%Y-%m-%d %H:%M")
+        i["end_date"] = i["end_date"].strftime("%Y-%m-%d %H:%M")
     return {"user": request.user.first_name if request.user.first_name else "Admin",
             "upcoming": upcoming_tournaments, "past": past_tournaments}
 

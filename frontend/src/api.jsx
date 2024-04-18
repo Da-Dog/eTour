@@ -55,6 +55,7 @@ export const getTournamentList = async () => {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
+            'Current-Time': Date.now(),
         },
     });
 

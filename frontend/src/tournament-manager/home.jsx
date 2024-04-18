@@ -1,8 +1,20 @@
-import {Box, Button, Flex, Heading, Text} from "@chakra-ui/react";
+import {
+    Box,
+    Button,
+    Card,
+    CardBody,
+    CardFooter,
+    Divider,
+    Flex,
+    Heading,
+    SimpleGrid,
+    Stack,
+    Text
+} from "@chakra-ui/react";
 import Sidebar from "./sidebar.jsx";
 import {getTournamentList} from "../api.jsx";
 import {useEffect, useState} from "react";
-import {FaCalendarCheck, FaCalendarDay} from "react-icons/fa";
+import {FaCalendarCheck, FaCalendarDay, FaEdit, FaFileAlt, FaTrashAlt} from "react-icons/fa";
 import {useOutlet, useNavigate} from "react-router-dom";
 
 function TournamentManagerHome() {
@@ -14,12 +26,14 @@ function TournamentManagerHome() {
     const outlet = useOutlet();
 
     useEffect( () => {
-        getTournamentList().then((response) => {
-            setUsername(response.user);
-            setUpcomingTournament(response.upcoming);
-            setPastTournament(response.past);
-        });
-    }, []);
+        if (!outlet) {
+            getTournamentList().then((response) => {
+                setUsername(response.user);
+                setUpcomingTournament(response.upcoming);
+                setPastTournament(response.past);
+            });
+        }
+    }, [outlet]);
 
     return (
         <Box bg={"gray.100"} w="100%" h="100vh">
@@ -39,29 +53,88 @@ function TournamentManagerHome() {
                             <FaCalendarCheck/>
                             <Heading size="md" ml={2}>Upcoming Tournaments</Heading>
                         </Flex>
-                        {/*TODO: replace place hold with actual cards and data*/}
+                        <SimpleGrid columns={3} spacing={4} p={5}>
                         {upcomingTournament.length > 0 ? (
                             upcomingTournament.map((tournament, index) => (
-                                <Box key={index} p={5} shadow="md" borderWidth="1px" flex="1" borderRadius="md" mb={4}>
-                                    <Heading fontSize="xl">{tournament.name}</Heading>
-                                </Box>
+                                <Card maxW='sm' key={index}>
+                                    <CardBody>
+                                        <Stack spacing='3'>
+                                            <Heading size='md'>{tournament.name}</Heading>
+                                            <Text>
+                                                <Text as='b'>Start Time: </Text>{tournament.start_date} <br/>
+                                                <Text as='b'>End Time: </Text>{tournament.end_date}
+                                            </Text>
+                                        </Stack>
+                                    </CardBody>
+                                    <Divider />
+                                    <CardFooter
+                                        justify='space-between'
+                                        flexWrap='wrap'
+                                        sx={{
+                                            '& > button': {
+                                                minW: '136px',
+                                            },
+                                        }}
+                                    >
+                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
+                                            Edit
+                                        </Button>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />}>
+                                            Delete
+                                        </Button>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>
+                                            Open
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
                             ))
                         ) : (
                             <Text color="gray.500" ml={9}>No upcoming tournaments</Text>
                         )}
+                        </SimpleGrid>
                         <Flex align="center" mb={4} ml={6} mt={4}>
                             <FaCalendarDay/>
                             <Heading size="md" ml={2}>Past Tournaments</Heading>
                         </Flex>
+                        <SimpleGrid columns={3} spacing={4} p={5}>
                         {pastTournament.length > 0 ? (
                             pastTournament.map((tournament, index) => (
-                                <Box key={index} p={5} shadow="md" borderWidth="1px" flex="1" borderRadius="md" mb={4}>
-                                    <Heading fontSize="xl">{tournament.name}</Heading>
-                                </Box>
+                                <Card maxW='sm' key={index}>
+                                    <CardBody>
+                                        <Stack spacing='3'>
+                                            <Heading size='md'>{tournament.name}</Heading>
+                                            <Text>
+                                                <Text as='b'>Start Time: </Text>{tournament.start_date} <br/>
+                                                <Text as='b'>End Time: </Text>{tournament.end_date}
+                                            </Text>
+                                        </Stack>
+                                    </CardBody>
+                                    <Divider />
+                                    <CardFooter
+                                        justify='space-between'
+                                        flexWrap='wrap'
+                                        sx={{
+                                            '& > button': {
+                                                minW: '136px',
+                                            },
+                                        }}
+                                    >
+                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
+                                            Edit
+                                        </Button>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />}>
+                                            Delete
+                                        </Button>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>
+                                            Open
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
                             ))
                         ) : (
                             <Text color="gray.500" ml={9}>No past tournaments</Text>
                         )}
+                        </SimpleGrid>
                     </>
                 )}
             </Box>
