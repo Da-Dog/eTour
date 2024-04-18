@@ -29,7 +29,7 @@ function refreshCheck(navigate) {
     }
 }
 
-function Sidebar() {
+function Sidebar({isSidebarDisabled}) {
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,17 +40,17 @@ function Sidebar() {
     }, []);
 
     return (
-        <Box w="250px" h="100vh" bg="white">
+        <Box w="250px" h="100vh" bg="white" position="absolute" left="0" top="0">
             <VStack align="start" spacing={5} p={6}>
                 <Image src="/logo.png" alt="Logo" boxSize='80px'/>
-                <Button variant="ghost" leftIcon={<FaTachometerAlt/>} width="100%" justifyContent="flex-start">Dashboard</Button>
-                <Button variant="ghost" leftIcon={<FaAddressCard/>} width="100%" justifyContent="flex-start">Player</Button>
-                <Button variant="ghost" leftIcon={<FaCalendarAlt/>} width="100%" justifyContent="flex-start">Event</Button>
-                <Button variant="ghost" leftIcon={<FaNetworkWired/>} width="100%" justifyContent="flex-start">Match</Button>
-                <Button variant="ghost" leftIcon={<FaEnvelopeOpen/>} width="100%" justifyContent="flex-start">Message</Button>
+                <Button variant="ghost" leftIcon={<FaTachometerAlt/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Dashboard</Button>
+                <Button variant="ghost" leftIcon={<FaAddressCard/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Player</Button>
+                <Button variant="ghost" leftIcon={<FaCalendarAlt/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Event</Button>
+                <Button variant="ghost" leftIcon={<FaNetworkWired/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Match</Button>
+                <Button variant="ghost" leftIcon={<FaEnvelopeOpen/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Message</Button>
             </VStack>
             <VStack align="start" spacing={5} p={6} position="absolute" bottom="0" w="250px">
-                <Button variant="ghost" leftIcon={<FaSave/>} width="100%" justifyContent="flex-start">Close</Button>
+                <Button variant="ghost" leftIcon={<FaSave/>} width="100%" justifyContent="flex-start" isDisabled={isSidebarDisabled}>Close</Button>
                 <Button variant="ghost" leftIcon={<FaSignOutAlt/>} width="100%" justifyContent="flex-start" onClick={Logout}>Logout</Button>
             </VStack>
         </Box>
