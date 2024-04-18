@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import {
     createBrowserRouter,
@@ -23,7 +22,7 @@ const router = createBrowserRouter([
         element: <Tournaments/>,
     },
     {
-        path: '/admin',
+        path: '/tm',
         element: <TournamentManagerHome/>,
     },
     {

@@ -15,7 +15,7 @@ function Login() {
         refresh().then(success => {
             if (success) {
                 alert("You are already logged in, redirecting to tournament manager.");
-                navigate('/admin');
+                navigate('/tm');
             }
         });
     });
@@ -29,7 +29,7 @@ function Login() {
         setLoginState(true);
         login(email, password).then(() => {
             setTimeout(() => {
-                navigate('/admin');
+                navigate('/tm');
             }, 1000);
         });
     };
