@@ -39,15 +39,19 @@ def tournament_list(request):
     current_time = datetime.fromtimestamp(int(request.META.get('HTTP_CURRENT_TIME'))/1000.0)
     upcoming_tournaments = list(Tournament.objects.filter(end_date__gte=current_time, owner=request.user).values("id", "name",
                                                                                                  "start_date",
-                                                                                                 "end_date"))
+                                                                                                 "end_date", "last_update_time", "create_time"))
     past_tournaments = list(Tournament.objects.filter(end_date__lt=current_time, owner=request.user).values("id", "name", "start_date",
-                                                                                            "end_date"))
+                                                                                            "end_date", "last_update_time", "create_time"))
     for i in upcoming_tournaments:
         i["start_date"] = i["start_date"].strftime("%Y-%m-%d %H:%M")
         i["end_date"] = i["end_date"].strftime("%Y-%m-%d %H:%M")
+        i["create_time"] = i["create_time"].strftime("%Y-%m-%d %H:%M")
+        i["last_update_time"] = i["last_update_time"].strftime("%Y-%m-%d %H:%M")
     for i in past_tournaments:
         i["start_date"] = i["start_date"].strftime("%Y-%m-%d %H:%M")
         i["end_date"] = i["end_date"].strftime("%Y-%m-%d %H:%M")
+        i["create_time"] = i["create_time"].strftime("%Y-%m-%d %H:%M")
+        i["last_update_time"] = i["last_update_time"].strftime("%Y-%m-%d %H:%M")
     return {"user": request.user.first_name if request.user.first_name else "Admin",
             "upcoming": upcoming_tournaments, "past": past_tournaments}
 

@@ -59,10 +59,12 @@ function TournamentManagerHome() {
                                 <Card maxW='sm' key={index}>
                                     <CardBody>
                                         <Stack spacing='3'>
-                                            <Heading size='md'>{tournament.name}</Heading>
+                                            <Heading size='md' textTransform="capitalize">{tournament.name}</Heading>
                                             <Text>
                                                 <Text as='b'>Start Time: </Text>{tournament.start_date} <br/>
-                                                <Text as='b'>End Time: </Text>{tournament.end_date}
+                                                <Text as='b'>End Time: </Text>{tournament.end_date} <br/>
+                                                <Text as='b'>Create Time: </Text>{tournament.create_time} <br/>
+                                                <Text as='b'>Last Update: </Text>{tournament.last_update_time} <br/>
                                             </Text>
                                         </Stack>
                                     </CardBody>
@@ -102,10 +104,12 @@ function TournamentManagerHome() {
                                 <Card maxW='sm' key={index}>
                                     <CardBody>
                                         <Stack spacing='3'>
-                                            <Heading size='md'>{tournament.name}</Heading>
+                                            <Heading size='md' textTransform="capitalize">{tournament.name}</Heading>
                                             <Text>
                                                 <Text as='b'>Start Time: </Text>{tournament.start_date} <br/>
-                                                <Text as='b'>End Time: </Text>{tournament.end_date}
+                                                <Text as='b'>End Time: </Text>{tournament.end_date} <br/>
+                                                <Text as='b'>Create Time: </Text>{tournament.create_time} <br/>
+                                                <Text as='b'>Last Update: </Text>{tournament.last_update_time} <br/>
                                             </Text>
                                         </Stack>
                                     </CardBody>
