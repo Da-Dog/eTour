@@ -129,3 +129,5 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_HEADERS = default_headers + ("Current-Time",)
+
+USE_TZ = False

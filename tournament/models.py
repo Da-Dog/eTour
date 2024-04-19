@@ -38,6 +38,7 @@ class Participant(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=1)  # M - male, F - female
     notes = models.TextField(blank=True, null=True)
+    tournament = models.ManyToManyField(Tournament, related_name='participants')
     create_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

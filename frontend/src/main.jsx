@@ -8,11 +8,15 @@ import {ChakraProvider} from "@chakra-ui/react";
 
 import Home from "./home.jsx";
 import Login from "./login.jsx";
-import Player from "./player.jsx";
+import Player from "./tournament-manager/player.jsx";
 import Tournaments from "./tournaments.jsx";
 import TournamentManagerHome from "./tournament-manager/home.jsx";
 import CreateTournament from "./tournament-manager/createTournament.jsx";
 import EditTournament from "./tournament-manager/editTournament.jsx";
+import Dashboard from "./tournament-manager/dashboard.jsx";
+import Event from "./tournament-manager/event.jsx";
+import Match from "./tournament-manager/match.jsx";
+import Message from "./tournament-manager/message.jsx";
 
 const router = createBrowserRouter([
     {
@@ -34,6 +38,26 @@ const router = createBrowserRouter([
             {
                 path: ':id/edit',
                 element: <EditTournament/>,
+            },
+            {
+                path: ':id',
+                element: <Dashboard/>,
+            },
+            {
+                path: ':id/player',
+                element: <Player/>,
+            },
+            {
+                path: ':id/event',
+                element: <Event/>,
+            },
+            {
+                path: ':id/match',
+                element: <Match/>,
+            },
+            {
+                path: ':id/message',
+                element: <Message/>,
             }
         ],
     },

@@ -15,7 +15,7 @@ import Sidebar from "./sidebar.jsx";
 import {deleteTournament, getTournamentList} from "../api.jsx";
 import {useEffect, useState} from "react";
 import {FaCalendarCheck, FaCalendarDay, FaEdit, FaFileAlt, FaTrashAlt} from "react-icons/fa";
-import {useOutlet, useNavigate} from "react-router-dom";
+import {useOutlet, useNavigate, useParams} from "react-router-dom";
 
 function TournamentManagerHome() {
     const [username, setUsername] = useState("");
@@ -27,6 +27,8 @@ function TournamentManagerHome() {
 
     const navigate = useNavigate();
     const outlet = useOutlet();
+
+    const { id } = useParams();
 
     function openDeleteModal(tournament, name) {
         setSelectedTournament([tournament, name]);
@@ -75,19 +77,17 @@ function TournamentManagerHome() {
             </Modal>
 
             <Box pl="250px" overflowY="auto" maxHeight="100vh">
-                <Sidebar isSidebarDisabled={true}/>
+                <Sidebar isSidebarDisabled={!id}/>
                 {outlet || (
                     <>
-                        <Flex direction="column" p={5}>
-                            <Flex justifyContent="space-between" alignItems="center" mb={4}>
-                                <Heading ml={6} mt={2}>Welcome {username}!</Heading>
-                                <Button colorScheme="teal" onClick={() => {navigate("/tm/new")}}>
-                                    + New Tournament
-                                </Button>
-                            </Flex>
+                        <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
+                            <Heading ml={6} mt={2}>Welcome {username}!</Heading>
+                            <Button colorScheme="teal" onClick={() => {navigate("/tm/new")}}>
+                                + New Tournament
+                            </Button>
                         </Flex>
                         <Flex align="center" ml={6} mt={4}>
-                            <FaCalendarCheck/>
+                            <FaCalendarDay/>
                             <Heading size="md" ml={2}>Upcoming Tournaments</Heading>
                         </Flex>
                         <SimpleGrid columns={3} spacing={4} p={5}>
@@ -121,7 +121,7 @@ function TournamentManagerHome() {
                                         <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>
                                             Delete
                                         </Button>
-                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />} onClick={() => navigate(tournament.id)}>
                                             Open
                                         </Button>
                                     </CardFooter>
@@ -132,7 +132,7 @@ function TournamentManagerHome() {
                         )}
                         </SimpleGrid>
                         <Flex align="center" ml={6} mt={4}>
-                            <FaCalendarDay/>
+                            <FaCalendarCheck/>
                             <Heading size="md" ml={2}>Past Tournaments</Heading>
                         </Flex>
                         <SimpleGrid columns={3} spacing={4} p={5}>
@@ -166,7 +166,7 @@ function TournamentManagerHome() {
                                         <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>
                                             Delete
                                         </Button>
-                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaFileAlt />} onClick={() => navigate(tournament.id)}>
                                             Open
                                         </Button>
                                     </CardFooter>

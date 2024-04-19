@@ -1,26 +1,20 @@
+import axios from 'axios';
 import Cookies from "js-cookie";
 
 export const login = async (email, password) => {
-    fetch('http://127.0.0.1:8000/token/pair', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({'username': email, 'password': password}),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.access) {
-                Cookies.set('token', data.access);
-                Cookies.set('refresh', data.refresh);
-                Cookies.set('last_refresh', Date.now());
-            } else {
-                throw new Error(data.detail);
-            }
-        })
-        .catch(error => {
-            alert(error);
-        });
+    const response = await axios.post('http://127.0.0.1:8000/token/pair', {
+        'username': email,
+        'password': password
+    });
+
+    const data = response.data;
+    if (data.access) {
+        Cookies.set('token', data.access);
+        Cookies.set('refresh', data.refresh);
+        Cookies.set('last_refresh', Date.now());
+    } else {
+        alert(data.detail);
+    }
 }
 
 export const refresh = async () => {
@@ -30,51 +24,48 @@ export const refresh = async () => {
         return false;
     }
     let success = false;
-    await fetch('http://127.0.0.1:8000/token/refresh', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({'refresh': refreshToken}),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.access) {
-                Cookies.set('token', data.access);
-                Cookies.set('last_refresh', Date.now());
-                success = true;
-            }
-        })
+    try {
+        const response = await axios.post('http://127.0.0.1:8000/token/refresh', {
+            'refresh': refreshToken
+        });
+
+        const data = response.data;
+        if (data.access) {
+            Cookies.set('token', data.access);
+            Cookies.set('last_refresh', Date.now());
+            success = true;
+        }
+    } catch (error) {
+        alert(error);
+    }
     return success;
 }
 
 export const getTournamentList = async () => {
     let token = Cookies.get('token');
-    let response = await fetch('http://127.0.0.1:8000/tournament', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'Current-Time': Date.now(),
-        },
-    });
+    try {
+        let response = await axios.get('http://127.0.0.1:8000/tournament', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Current-Time': Date.now(),
+            },
+        });
 
-    if (!response.ok) {
-        alert("Failed to fetch tournament list");
-    } else {
-        return await response.json();
+        if (response.status === 200) {
+            return response.data;
+        } else {
+            alert("Failed to fetch tournament list");
+        }
+    } catch (error) {
+        alert(error);
     }
 }
 
 export const createTournament = async (name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone) => {
     let token = Cookies.get('token');
-    let response = await fetch('http://127.0.0.1:8000/tournament', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+    try {
+        let response = await axios.post('http://127.0.0.1:8000/tournament', {
             'name': name,
             'description': description,
             'start_date': startDate,
@@ -87,60 +78,68 @@ export const createTournament = async (name, description, startDate, endDate, ad
             'contact_name': contactName,
             'contact_email': contactEmail,
             'contact_phone': contactPhone,
-        }),
-    });
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
 
-    if (!response.ok) {
-        alert("Failed to create tournament");
-        return false;
-    } else {
-        return await response.json();
+        if (response.status !== 200) {
+            alert("Failed to create tournament");
+            return false;
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
     }
 }
 
 export const deleteTournament = async (id) => {
     let token = Cookies.get('token');
-    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
+    try {
+        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${id}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
 
-    if (!response.ok) {
-        alert("Failed to delete tournament");
-    } else {
-        alert("Tournament deleted successfully");
+        if (response.status !== 200) {
+            alert("Failed to delete tournament");
+        } else {
+            alert("Tournament deleted successfully");
+        }
+    } catch (error) {
+        alert(error);
     }
 }
 
 export const getTournament = async (id) => {
     let token = Cookies.get('token');
-    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
 
-    if (!response.ok) {
-        alert("Failed to fetch tournament");
-    } else {
-        return await response.json();
+        if (response.status !== 200) {
+            alert("Failed to fetch tournament");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
     }
 }
 
 export const editTournament = async (id, name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone) => {
     let token = Cookies.get('token');
-    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+    try {
+        let response = await axios.put(`http://127.0.0.1:8000/tournament/${id}`, {
             'name': name,
             'description': description,
             'start_date': startDate,
@@ -153,13 +152,20 @@ export const editTournament = async (id, name, description, startDate, endDate, 
             'contact_name': contactName,
             'contact_email': contactEmail,
             'contact_phone': contactPhone,
-        }),
-    });
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
 
-    if (!response.ok) {
-        alert("Failed to update tournament");
-        return false;
-    } else {
-        return await response.json();
+        if (response.status !== 200) {
+            alert("Failed to update tournament");
+            return false;
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
     }
 }
