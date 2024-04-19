@@ -86,7 +86,7 @@ function TournamentManagerHome() {
                                 </Button>
                             </Flex>
                         </Flex>
-                        <Flex align="center" mb={4} ml={6} mt={4}>
+                        <Flex align="center" ml={6} mt={4}>
                             <FaCalendarCheck/>
                             <Heading size="md" ml={2}>Upcoming Tournaments</Heading>
                         </Flex>
@@ -115,7 +115,7 @@ function TournamentManagerHome() {
                                             },
                                         }}
                                     >
-                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />} onClick={() => navigate(tournament.id + "/edit")}>
                                             Edit
                                         </Button>
                                         <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>
@@ -131,7 +131,7 @@ function TournamentManagerHome() {
                             <Text color="gray.500" ml={9}>No upcoming tournaments</Text>
                         )}
                         </SimpleGrid>
-                        <Flex align="center" mb={4} ml={6} mt={4}>
+                        <Flex align="center" ml={6} mt={4}>
                             <FaCalendarDay/>
                             <Heading size="md" ml={2}>Past Tournaments</Heading>
                         </Flex>
@@ -160,7 +160,7 @@ function TournamentManagerHome() {
                                             },
                                         }}
                                     >
-                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />}>
+                                        <Button flex='1' variant='ghost' leftIcon={<FaEdit />} onClick={() => navigate(tournament.id + "/edit")}>
                                             Edit
                                         </Button>
                                         <Button flex='1' variant='ghost' leftIcon={<FaTrashAlt />} onClick={() => openDeleteModal(tournament.id, tournament.name)}>

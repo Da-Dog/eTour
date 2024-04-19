@@ -1,9 +1,9 @@
-import { useState } from "react";
-import {createTournament} from "../api.jsx";
-import {useNavigate} from "react-router-dom";
+import { useState, useEffect } from "react";
+import { editTournament, getTournament } from "../api.jsx";
+import { useNavigate, useParams } from "react-router-dom";
 import TournamentForm from "./tournamentForm.jsx";
 
-function CreateTournament() {
+function EditTournament() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -17,18 +17,37 @@ function CreateTournament() {
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
 
-    const [creating, setCreating] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     const navigate = useNavigate();
+    const { id } = useParams();
+
+    useEffect(() => {
+        getTournament(id).then(tournamentData => {
+            const data = tournamentData.tournament;
+            setName(data.name || "")
+            setDescription(data.description || "")
+            setStartDate(data.start_date || "")
+            setEndDate(data.end_date || "")
+            setAddress1(data.address_1 || "")
+            setAddress2(data.address_2 || "")
+            setCity(data.city || "")
+            setState(data.state || "")
+            setZipCode(data.zip_code || "")
+            setContactName(data.contact_name || "")
+            setContactEmail(data.contact_email || "")
+            setContactPhone(data.contact_phone || "")
+        });
+    }, [id]);
 
     const handleSubmit = (event) => {
-        setCreating(true);
-        createTournament(name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone).then(response => {
+        setUpdating(true);
+        editTournament(id, name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone).then(response => {
             if (response) {
-                alert("Tournament created successfully");
+                alert("Tournament updated successfully");
                 navigate("/tm");
             } else {
-                setCreating(false);
+                setUpdating(false);
             }
         });
         event.preventDefault();
@@ -36,7 +55,7 @@ function CreateTournament() {
 
     return (
         <TournamentForm
-            type="create" name={name} setName={setName}
+            title="Tournament Edit" name={name} setName={setName}
             description={description} setDescription={setDescription}
             startDate={startDate} setStartDate={setStartDate}
             endDate={endDate} setEndDate={setEndDate}
@@ -48,10 +67,10 @@ function CreateTournament() {
             contactName={contactName} setContactName={setContactName}
             contactEmail={contactEmail} setContactEmail={setContactEmail}
             contactPhone={contactPhone} setContactPhone={setContactPhone}
-            creating={creating}
+            creating={updating}
             handleSubmit={handleSubmit}
         />
     );
 }
 
-export default CreateTournament;
+export default EditTournament;

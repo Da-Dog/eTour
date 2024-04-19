@@ -114,3 +114,52 @@ export const deleteTournament = async (id) => {
         alert("Tournament deleted successfully");
     }
 }
+
+export const getTournament = async (id) => {
+    let token = Cookies.get('token');
+    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        alert("Failed to fetch tournament");
+    } else {
+        return await response.json();
+    }
+}
+
+export const editTournament = async (id, name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone) => {
+    let token = Cookies.get('token');
+    let response = await fetch(`http://127.0.0.1:8000/tournament/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            'name': name,
+            'description': description,
+            'start_date': startDate,
+            'end_date': endDate,
+            'address_1': address1,
+            'address_2': address2 ? address2 : null,
+            'city': city,
+            'state': state,
+            'zip_code': zipCode,
+            'contact_name': contactName,
+            'contact_email': contactEmail,
+            'contact_phone': contactPhone,
+        }),
+    });
+
+    if (!response.ok) {
+        alert("Failed to update tournament");
+        return false;
+    } else {
+        return await response.json();
+    }
+}
