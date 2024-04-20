@@ -77,8 +77,9 @@ class Entry(models.Model):
 
 class Court(models.Model):
     id = models.AutoField(primary_key=True)
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
     number = models.IntegerField()
-    note = models.TextField()
+    note = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return 'Court ' + str(self.number)

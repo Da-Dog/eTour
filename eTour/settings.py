@@ -112,6 +112,8 @@ LANGUAGE_CODE = 'en-us'
 
 USE_I18N = True
 
+TIME_ZONE = 'America/Los_Angeles'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

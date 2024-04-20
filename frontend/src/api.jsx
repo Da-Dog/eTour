@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from "js-cookie";
+import dashboard from "./tournament-manager/dashboard.jsx";
 
 export const login = async (email, password) => {
     const response = await axios.post('http://127.0.0.1:8000/token/pair', {
@@ -162,6 +163,26 @@ export const editTournament = async (id, name, description, startDate, endDate, 
         if (response.status !== 200) {
             alert("Failed to update tournament");
             return false;
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getTournamentDashboard = async (id) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}/dashboard`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch tournament dashboard");
         } else {
             return response.data;
         }

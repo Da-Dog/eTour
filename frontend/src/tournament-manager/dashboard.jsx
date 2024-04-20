@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams, useRoutes} from "react-router-dom";
 import {
     Box,
     Button,
@@ -20,8 +20,10 @@ import {
     FaFileSignature,
     FaPlane, FaSquare, FaUserFriends
 } from "react-icons/fa";
+import {getTournamentDashboard} from "../api.jsx";
 
 function Dashboard() {
+    const [name, setName] = useState("");
     const [entries, setEntries] = useState(0);
     const [matches, setMatches] = useState(0);
     const [events, setEvents] = useState(0);
@@ -42,45 +44,62 @@ function Dashboard() {
         { title: 'Completed Matches', stat: completedMatches.toString(), icon: <FaCalendarCheck size={'3em'} /> },
     ];
 
-    useEffect(() => {
-        // Fetch data from backend here and update the state variables.
-        setCourtStatus([
-            {
-                number: 1,
-                status: 'occupied',
-                startTime: new Date('2024-04-19T15:22:00'),
-                matchNumber: 1
-            },
-            {
-                number: 2,
-                status: 'free',
-                startTime: null,
-                matchNumber: null
-            }
-        ]);
+    function updateDuration() {
+        setCourtStatus(courtStatus => courtStatus.map(court => {
+            if (court.startTime) {
+                const now = new Date();
+                const diff = now - court.startTime;
+                const seconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
 
-        const interval = setInterval(() => {
-            setCourtStatus(courtStatus => courtStatus.map(court => {
-                if (court.startTime) {
-                    const now = new Date();
-                    const diff = now - court.startTime;
-                    const seconds = Math.floor(diff / 1000);
-                    const minutes = Math.floor(seconds / 60);
-                    const hours = Math.floor(minutes / 60);
-
-                    let duration;
-                    if (hours > 0) {
-                        duration = `${hours.toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-                    } else {
-                        duration = `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-                    }
-
-                    return {...court, duration};
+                let duration;
+                if (hours > 0) {
+                    duration = `${hours.toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
                 } else {
-                    return {...court, duration: '00:00'};
+                    duration = `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
                 }
-            }));
-        }, 1000);
+
+                if (hours < 0 || minutes < 0 || seconds < 0) {
+                    return {...court, duration: 'Match In Progress'};
+                }
+                return {...court, duration};
+            } else {
+                return {...court, duration: '00:00'};
+            }
+        }));
+    }
+
+    function updateDashboard() {
+        getTournamentDashboard(id).then((data) => {
+            setName(data.name);
+            setEntries(data.entries);
+            setMatches(data.matches);
+            setEvents(data.events);
+            setDays(data.days);
+            setScheduledMatches(data.scheduledMatches);
+            setCompletedMatches(data.completedMatches);
+            data.courtStatus.forEach(court => {
+                if (court.startTime) {
+                    court.startTime = new Date(court.startTime.replace(' ', 'T'));
+                }
+            });
+            setCourtStatus(data.courtStatus);
+            updateDuration();
+
+            const interval = setInterval(() => {
+                updateDuration();
+            }, 1000);
+
+            return () => clearInterval(interval);
+        });
+    }
+
+    useEffect(() => {
+        updateDashboard();
+        const interval = setInterval(() => {
+            updateDashboard();
+        }, 60000);
 
         return () => clearInterval(interval);
     }, []);
@@ -88,7 +107,7 @@ function Dashboard() {
     return (
         <Box p={5}>
             <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
-                <Heading ml={6} mt={2}>Dashboard - {/* Tournament Name */}</Heading>
+                <Heading ml={6} mt={2} w={'75%'} isTruncated>Dashboard - {name}</Heading>
                 <Button colorScheme="teal" onClick={() => {navigate("/tm/" + id + "/edit")}} leftIcon={<FaEdit />}>
                     Edit Tournament
                 </Button>
@@ -100,7 +119,7 @@ function Dashboard() {
                         px={{ base: 2, md: 4 }}
                         py={'5'}
                         border={'1px solid'}
-                        borderColor={useColorModeValue('gray.800', 'gray.500')}
+                        borderColor={'gray.800'}
                         rounded={'lg'}>
                         <Flex justifyContent={'space-between'}>
                             <Box pl={{ base: 2, md: 4 }}>
@@ -113,7 +132,7 @@ function Dashboard() {
                             </Box>
                             <Box
                                 my={'auto'}
-                                color={useColorModeValue('gray.800', 'gray.200')}
+                                color={'gray.800'}
                                 alignContent={'center'}>
                                 {item.icon}
                             </Box>
@@ -129,7 +148,7 @@ function Dashboard() {
                         px={{ base: 2, md: 4 }}
                         py={'5'}
                         border={'1px solid'}
-                        borderColor={useColorModeValue('gray.800', 'gray.500')}
+                        borderColor={'gray.800'}
                         rounded={'lg'}>
                         <Flex justifyContent={'space-between'}>
                             <Box pl={{ base: 2, md: 4 }}>
@@ -145,7 +164,7 @@ function Dashboard() {
                             </Box>
                             <Box
                                 my={'auto'}
-                                color={useColorModeValue('gray.800', 'gray.200')}
+                                color={'gray.800'}
                                 alignContent={'center'}>
                                 {court.status === 'occupied' ? <FaUserFriends size={'3em'} /> : <FaSquare size={'3em'} />}
                             </Box>

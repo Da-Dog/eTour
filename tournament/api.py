@@ -115,3 +115,41 @@ def tournament_delete(request, tournament_id: str):
         return {"message": "Tournament deleted successfully!"}
     except ObjectDoesNotExist:
         return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/dashboard", auth=JWTAuth())
+def tournament_dashboard(request, tournament_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        entries = 0
+        for i in tournament.event_set.all():
+            entries += i.entry_set.count()
+        matches = 0
+        for i in tournament.event_set.all():
+            matches += i.match_set.count()
+        scheduled_matches = 0
+        for i in tournament.event_set.all():
+            scheduled_matches += i.match_set.filter(score1__isnull=True).count()
+        completed_matches = 0
+        for i in tournament.event_set.all():
+            completed_matches += i.match_set.filter(score1__isnull=False).count()
+        courts = []
+        for i in tournament.court_set.all():
+            courts.append({
+                "number": i.number,
+                "status": "free" if i.match_set.count() == 0 else "occupied",
+                "startTime": i.match_set.first().actual_start_time if i.match_set.count() > 0 else None,
+                "matchNumber": i.match_set.first().match if i.match_set.count() > 0 else None
+            })
+        return {
+            "name": tournament.name,
+            "entries": entries,
+            "matches": matches,
+            "events": tournament.event_set.count(),
+            "days": (tournament.end_date - tournament.start_date).days,
+            "scheduledMatches": "{0:}%".format(int(scheduled_matches/matches)*100 if matches > 0 else 0),
+            "completedMatches": "{0:}%".format(int(completed_matches/matches)*100 if matches > 0 else 0),
+            "courtStatus": courts,
+        }
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
