@@ -190,3 +190,137 @@ export const getTournamentDashboard = async (id) => {
         alert(error);
     }
 }
+
+export const getTournamentPlayers = async (id) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}/participants`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch players");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const addPlayer = async (id, player) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.post(`http://127.0.0.1:8000/tournament/${id}/participants`, {
+            "first_name": player.first_name,
+            "middle_name": player.middle_name ? player.middle_name : null,
+            "last_name": player.last_name,
+            "email": player.email ? player.email : null,
+            "phone": player.phone ? player.phone : null,
+            "date_of_birth": player.date_of_birth ? player.date_of_birth : null,
+            "gender": player.gender,
+            "notes": player.notes ? player.notes : null,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to add player");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getPlayer = async (tournamentId, playerId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch player");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const updatePlayer = async (tournamentId, playerId, player) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
+            "first_name": player.first_name,
+            "middle_name": player.middle_name ? player.middle_name : null,
+            "last_name": player.last_name,
+            "email": player.email ? player.email : null,
+            "phone": player.phone ? player.phone : null,
+            "date_of_birth": player.date_of_birth ? player.date_of_birth : null,
+            "gender": player.gender,
+            "notes": player.notes ? player.notes : null,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to update player");
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const deletePlayer = async (tournamentId, playerId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to delete player");
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getPlayerEntries = async (tournamentId, participantId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${participantId}/entries`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch player entries");
+        } else {
+            return response.data.entries;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}

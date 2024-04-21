@@ -2,28 +2,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
-from ninja import Schema
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
-from .models import Tournament
-
-
-class TournamentSchema(Schema):
-    name: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(..., min_length=1, max_length=500)
-    start_date: datetime
-    end_date: datetime
-    address_1: str = Field(..., min_length=1, max_length=200)
-    address_2: Optional[str] = Field(None, min_length=1, max_length=200)
-    city: str = Field(..., min_length=1, max_length=100)
-    state: str = Field(..., min_length=1, max_length=100)
-    zip_code: str = Field(..., min_length=1, max_length=20)
-    contact_name: str = Field(..., min_length=1, max_length=100)
-    contact_email: EmailStr
-    contact_phone: str = Field(..., min_length=1, max_length=20)
-
+from .models import Tournament, Participant, Entry
+from .schema import TournamentSchema, ParticipantSchema
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
@@ -36,12 +18,16 @@ def home(request):
 
 @api.get("/tournament", auth=JWTAuth())
 def tournament_list(request):
-    current_time = datetime.fromtimestamp(int(request.META.get('HTTP_CURRENT_TIME'))/1000.0)
-    upcoming_tournaments = list(Tournament.objects.filter(end_date__gte=current_time, owner=request.user).values("id", "name",
-                                                                                                 "start_date",
-                                                                                                 "end_date", "last_update_time", "create_time"))
-    past_tournaments = list(Tournament.objects.filter(end_date__lt=current_time, owner=request.user).values("id", "name", "start_date",
-                                                                                            "end_date", "last_update_time", "create_time"))
+    current_time = datetime.fromtimestamp(int(request.META.get('HTTP_CURRENT_TIME')) / 1000.0)
+    upcoming_tournaments = list(
+        Tournament.objects.filter(end_date__gte=current_time, owner=request.user).values("id", "name",
+                                                                                         "start_date",
+                                                                                         "end_date", "last_update_time",
+                                                                                         "create_time"))
+    past_tournaments = list(
+        Tournament.objects.filter(end_date__lt=current_time, owner=request.user).values("id", "name", "start_date",
+                                                                                        "end_date", "last_update_time",
+                                                                                        "create_time"))
     for i in upcoming_tournaments:
         i["start_date"] = i["start_date"].strftime("%Y-%m-%d %H:%M")
         i["end_date"] = i["end_date"].strftime("%Y-%m-%d %H:%M")
@@ -147,9 +133,123 @@ def tournament_dashboard(request, tournament_id: str):
             "matches": matches,
             "events": tournament.event_set.count(),
             "days": (tournament.end_date - tournament.start_date).days,
-            "scheduledMatches": "{0:}%".format(int(scheduled_matches/matches)*100 if matches > 0 else 0),
-            "completedMatches": "{0:}%".format(int(completed_matches/matches)*100 if matches > 0 else 0),
+            "scheduledMatches": "{0:}%".format(int(scheduled_matches / matches) * 100 if matches > 0 else 0),
+            "completedMatches": "{0:}%".format(int(completed_matches / matches) * 100 if matches > 0 else 0),
             "courtStatus": courts,
         }
     except ObjectDoesNotExist:
         return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/participants", auth=JWTAuth())
+def tournament_participants(request, tournament_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        participants = list(tournament.participants.all().values("id", "first_name", "middle_name", "last_name",
+                                                                 "email", "phone", "gender", "date_of_birth",
+                                                                 "create_time"))
+        for i in participants:
+            i['name'] = i['first_name'] + " " + (i['middle_name'] + " " if i['middle_name'] else '') + i['last_name']
+            i.pop("first_name")
+            i.pop("middle_name")
+            i.pop("last_name")
+            i["create_time"] = i["create_time"].strftime("%Y-%m-%d")
+        return {"participants": participants}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/participants/{participant_id}", auth=JWTAuth())
+def participant_detail(request, tournament_id: str, participant_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            participant = tournament.participants.get(id=participant_id)
+            # format return with schema
+            return {
+                "first_name": participant.first_name,
+                "middle_name": participant.middle_name,
+                "last_name": participant.last_name,
+                "email": participant.email,
+                "phone": participant.phone,
+                "date_of_birth": participant.date_of_birth.strftime("%Y-%m-%d") if participant.date_of_birth else None,
+                "gender": participant.gender,
+                "notes": participant.notes
+            }
+        except ObjectDoesNotExist:
+            return {"error": "Participant not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.post("/tournament/{tournament_id}/participants", auth=JWTAuth())
+def add_participant(request, tournament_id: str, participant_schema: ParticipantSchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        participant = Participant(**participant_schema.dict())
+        participant.save()
+        tournament.participants.add(participant)
+        return {"id": participant.id}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.put("/tournament/{tournament_id}/participants/{participant_id}", auth=JWTAuth())
+def update_participant(request, tournament_id: str, participant_id: str, participant_schema: ParticipantSchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            participant = tournament.participants.get(id=participant_id)
+            participant.first_name = participant_schema.first_name
+            participant.middle_name = participant_schema.middle_name
+            participant.last_name = participant_schema.last_name
+            participant.email = participant_schema.email
+            participant.phone = participant_schema.phone
+            participant.date_of_birth = participant_schema.date_of_birth
+            participant.gender = participant_schema.gender
+            participant.notes = participant_schema.notes
+            participant.save()
+            return {"message": "Participant updated successfully!"}
+        except ObjectDoesNotExist:
+            return {"error": "Participant not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament or Participant not found."}
+
+
+@api.delete("/tournament/{tournament_id}/participants/{participant_id}", auth=JWTAuth())
+def delete_participant(request, tournament_id: str, participant_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            participant = tournament.participants.get(id=participant_id)
+            if participant.tournament.count() == 1:
+                participant.delete()
+                return {"message": "Participant deleted successfully!"}
+            else:
+                tournament.participants.remove(participant)
+                return {"message": "Participant removed from tournament!"}
+        except ObjectDoesNotExist:
+            return {"error": "Participant not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament or Participant not found."}
+
+
+@api.get("/tournament/{tournament_id}/participants/{participant_id}/entries", auth=JWTAuth())
+def participant_entries(request, tournament_id: str, participant_id: str):
+    try:
+        entries = []
+        for i in list(Entry.objects.filter(participant_id=participant_id, event__tournament_id=tournament_id,
+                             event__tournament__owner=request.user).values("event__name", "partner__first_name")):
+            entries.append({
+                "event": i["event__name"],
+                "partner": i["partner__first_name"]
+            })
+        for i in list(Entry.objects.filter(partner_id=participant_id, event__tournament_id=tournament_id,
+                             event__tournament__owner=request.user).values("event__name", "participant__first_name")):
+            entries.append({
+                "event": i["event__name"],
+                "partner": i["participant__first_name"]
+            })
+        return {"entries": entries}
+    except ObjectDoesNotExist:
+        return {"error": "Participant not found."}

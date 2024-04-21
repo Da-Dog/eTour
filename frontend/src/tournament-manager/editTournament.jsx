@@ -45,7 +45,7 @@ function EditTournament() {
         editTournament(id, name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone).then(response => {
             if (response) {
                 alert("Tournament updated successfully");
-                navigate("/tm");
+                navigate("/tm/" + id);
             } else {
                 setUpdating(false);
             }
