@@ -69,6 +69,7 @@ function Player() {
     const [isEditMode, setIsEditMode] = useState(false);
     const [playerEntries, setPlayerEntries] = useState([]);
     const { isOpen: isEntriesOpen, onOpen: onEntriesOpen, onClose: onEntriesClose } = useDisclosure();
+    const [searchTerm, setSearchTerm] = useState("");
 
     const {id} = useParams();
 
@@ -184,6 +185,10 @@ function Player() {
                 onEntriesOpen();
             }
         });
+    };
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
     };
 
     useEffect(() => {
@@ -334,6 +339,9 @@ function Player() {
 
             <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
                 <Heading ml={6} mt={2}>Players</Heading>
+                <Box w={'40%'}>
+                    <Input placeholder="Search players" value={searchTerm} onChange={handleSearchChange} />
+                </Box>
                 <Button colorScheme="teal" leftIcon={<FaPlus/>} ref={addPlayerRef} onClick={() => handleOpen(false)}>
                     Add Player
                 </Button>
@@ -351,7 +359,7 @@ function Player() {
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {players.map((player, index) => (
+                    {players.filter(player => player.name.toLowerCase().includes(searchTerm.toLowerCase())).map((player, index) => (
                         <Tr key={index}>
                             <Td>{player.name}</Td>
                             <Td>{player.email}</Td>
