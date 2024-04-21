@@ -360,7 +360,7 @@ function Player() {
                 </Thead>
                 <Tbody>
                     {players.filter(player => player.name.toLowerCase().includes(searchTerm.toLowerCase())).map((player, index) => (
-                        <Tr key={index}>
+                        <Tr key={index}  _hover={{ backgroundColor: 'gray.200' }}>
                             <Td>{player.name}</Td>
                             <Td>{player.email}</Td>
                             <Td>{player.phone}</Td>

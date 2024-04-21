@@ -28,3 +28,17 @@ class ParticipantSchema(Schema):
     date_of_birth: Optional[datetime] = Field(None)
     gender: str = Field(..., min_length=1, max_length=1)
     notes: Optional[str] = Field(None)
+
+
+class EventSchema(Schema):
+    id: Optional[int] = Field(None)
+    name: str = Field(..., min_length=1, max_length=100)
+    type: str = Field(..., min_length=1, max_length=100)
+    gender: str = Field(..., min_length=1, max_length=1)
+    fee: float = Field(...)
+    max_entry: int = Field(...)
+    scoring_format: str = Field(..., min_length=1, max_length=1)
+    arrangement: str = Field(..., min_length=1, max_length=2)
+    playoff: bool = Field(...)
+    consolation: str = Field(..., min_length=1, max_length=2)
+    full_feed_last_round: Optional[str] = Field(None, min_length=1, max_length=2)

@@ -324,3 +324,54 @@ export const getPlayerEntries = async (tournamentId, participantId) => {
         alert(error);
     }
 }
+
+export const getEvents = async (tournamentId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch events");
+        } else {
+            return response.data.events;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const addEvent = async (tournamentId, event) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.post(`http://127.0.0.1:8000/tournament/${tournamentId}/events`, {
+            name: event.name,
+            type: event.type,
+            gender: event.gender,
+            fee:  parseFloat(event.fee),
+            max_entry: parseInt(event.max_entry),
+            scoring_format: event.scoring_format,
+            arrangement: event.arrangement,
+            playoff: event.playoff,
+            consolation: event.consolation,
+            full_feed_last_round: event.full_feed_last_round ? event.full_feed_last_round : null
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to add event");
+        } else {
+            return response.data.id;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}

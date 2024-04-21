@@ -4,8 +4,8 @@ from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
 from datetime import datetime
 
-from .models import Tournament, Participant, Entry
-from .schema import TournamentSchema, ParticipantSchema
+from .models import Tournament, Participant, Entry, Event
+from .schema import TournamentSchema, ParticipantSchema, EventSchema
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
@@ -253,3 +253,37 @@ def participant_entries(request, tournament_id: str, participant_id: str):
         return {"entries": entries}
     except ObjectDoesNotExist:
         return {"error": "Participant not found."}
+
+
+@api.get("/tournament/{tournament_id}/events", auth=JWTAuth())
+def tournament_events(request, tournament_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        events = list(tournament.event_set.all().values("id", "name", "type", "gender", "fee", "max_entry", "draw_status"))
+        for i in events:
+            i["max_entry"] = i["max_entry"] if i["max_entry"] > 0 else "No Limit"
+            i["draw_status"] = "Finalized" if i["draw_status"] == "F" else "Tentative" if i["draw_status"] == "T" else "Pending"
+        return {"events": events}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.post("/tournament/{tournament_id}/events", auth=JWTAuth())
+def add_event(request, tournament_id: str, event_schema: EventSchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        if tournament.event_set.filter(name=event_schema.name).exists():
+            return {"error": "Event already exists."}
+        elif event_schema.type not in ["S", "D", "M"]:
+            return {"error": "Invalid event type."}
+        elif event_schema.scoring_format not in ["S", "O"]:
+            return {"error": "Invalid scoring format."}
+        elif event_schema.arrangement not in ["E", "R", "EC", "RP"]:
+            return {"error": "Invalid arrangement."}
+        elif event_schema.consolation not in ["N", "FR", "FM", "FF"]:
+            return {"error": "Invalid consolation."}
+        event = Event(**event_schema.dict(), tournament=tournament)
+        event.save()
+        return {"id": event.id}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
