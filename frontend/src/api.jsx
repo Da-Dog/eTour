@@ -353,7 +353,7 @@ export const addEvent = async (tournamentId, event) => {
             type: event.type,
             gender: event.gender,
             fee:  parseFloat(event.fee),
-            max_entry: parseInt(event.max_entry),
+            max_entry: event.max_entry,
             scoring_format: event.scoring_format,
             arrangement: event.arrangement,
             playoff: event.playoff,

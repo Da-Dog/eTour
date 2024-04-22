@@ -81,7 +81,7 @@ function TournamentManagerHome() {
                 {outlet || (
                     <>
                         <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
-                            <Heading ml={6} mt={2}>Welcome {username}!</Heading>
+                            <Heading ml={6} mt={2}  w={'75%'} isTruncated>Welcome {username}!</Heading>
                             <Button colorScheme="teal" onClick={() => {navigate("/tm/new")}}>
                                 + New Tournament
                             </Button>

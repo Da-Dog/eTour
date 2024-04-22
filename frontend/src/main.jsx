@@ -17,6 +17,7 @@ import Dashboard from "./tournament-manager/dashboard.jsx";
 import Event from "./tournament-manager/event.jsx";
 import Match from "./tournament-manager/match.jsx";
 import Message from "./tournament-manager/message.jsx";
+import EventDetail from "./tournament-manager/eventDetail.jsx";
 
 const router = createBrowserRouter([
     {
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
             {
                 path: ':id/event',
                 element: <Event/>,
+            },
+            {
+                path: ':id/event/:event_id',
+                element: <EventDetail/>,
             },
             {
                 path: ':id/match',

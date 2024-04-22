@@ -1,33 +1,23 @@
-import {useState, useEffect} from 'react';
 import {
     Box,
-    Button,
-    Input,
-    Table,
-    Thead,
-    Tbody,
-    Tr,
+    Button, Checkbox,
+    Flex, FormControl, FormHelperText, FormLabel,
+    Heading, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select,
+    Tab, Table,
+    TabList,
+    TabPanel,
+    TabPanels,
+    Tabs, Tbody,
     Th,
-    Td,
-    Flex,
-    Heading,
-    useDisclosure,
-    DrawerOverlay,
-    DrawerContent,
-    DrawerCloseButton,
-    DrawerHeader,
-    DrawerBody,
-    VStack,
-    FormControl,
-    FormLabel,
-    DrawerFooter, Drawer, Checkbox, Select, FormHelperText
+    Thead,
+    Tr, useDisclosure, VStack
 } from "@chakra-ui/react";
+import {useParams} from "react-router-dom";
 import {FaPlus} from "react-icons/fa";
-import {addEvent, getEvents} from "../api.jsx";
-import {useNavigate, useParams} from "react-router-dom";
+import {useState} from "react";
 
-function Events() {
-    const [events, setEvents] = useState([]);
+function EventDetail() {
+    const {id, event_id} = useParams();
     const [event, setEvent] = useState({
         name: '',
         type: 'S',
@@ -40,69 +30,8 @@ function Events() {
         consolation: 'N',
         full_feed_last_round: '',
     });
-    const [search, setSearch] = useState('');
-    const {isOpen, onOpen, onClose} = useDisclosure()
-
-    const {id} = useParams();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        fetchEvents();
-    }, []);
-
-    const fetchEvents = () => {
-        getEvents(id).then((response) => {
-            if (response) {
-                setEvents(response);
-            }
-        });
-    };
-
-    const handleSearch = (e) => {
-        setSearch(e.target.value);
-    };
-
-    const handleSubmit = () => {
-        if (event.name === '') {
-            alert('Please enter event name');
-            return;
-        } else if (event.fee === '') {
-            alert('Please enter event fee');
-            return;
-        } else if (event.max_entry === '') {
-            alert('Please enter max entry');
-            return;
-        }
-        addEvent(id, event).then((id) => {
-            onClose();
-            setEvents([...events, {
-                id: id,
-                name: event.name,
-                type: event.type,
-                gender: event.gender,
-                fee: parseFloat(event.fee).toFixed(2),
-                max_entry: event.max_entry === 0 ? 'No Limit' : event.max_entry,
-                draw_status: "Pending"
-        }])
-            ;
-        });
-    };
-
-    const handleOpen = () => {
-        setEvent({
-            name: '',
-            type: 'S',
-            gender: 'M',
-            fee: '',
-            max_entry: 0,
-            scoring_format: 'S',
-            arrangement: 'E',
-            playoff: true,
-            consolation: 'N',
-            full_feed_last_round: '',
-        })
-        onOpen();
-    }
+    const [tabIndex, setTabIndex] = useState(0);
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const handleInputChange = (e) => {
         setEvent({
@@ -111,22 +40,54 @@ function Events() {
         });
     }
 
+    const handleDeleteConfirm = () => {
+        console.log('delete');
+        // Call api to delete
+    }
+
     return (
         <Box p={5}>
-            <Drawer
-                isOpen={isOpen}
-                placement='right'
-                onClose={onClose}
-            >
-                <DrawerOverlay/>
-                <DrawerContent>
-                    <DrawerCloseButton/>
-                    <DrawerHeader>New Event</DrawerHeader>
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Confirm Delete</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        Are you sure you want to delete this event?
+                        <br/><br/>
+                        Events with entries can not be deleted, if you want to delete this event, please delete all entries first.
+                    </ModalBody>
 
-                    <DrawerBody>
+                    <ModalFooter>
+                        <Button colorScheme="blue" mr={3} onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button variant="ghost" colorScheme="red" onClick={handleDeleteConfirm}>
+                            Delete
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
+                <Heading ml={6} mt={2}  w={'75%'} isTruncated>Event Detail - {event.name}</Heading>
+                {tabIndex === 1 ?
+                    <Button colorScheme="teal" leftIcon={<FaPlus/>}>
+                        Add Entry
+                    </Button> : <></>
+                }
+            </Flex>
+
+            <Tabs variant='soft-rounded' colorScheme='blue' onChange={(index) => setTabIndex(index)} isFitted>
+                <TabList>
+                    <Tab>Event Info</Tab>
+                    <Tab>Entries</Tab>
+                </TabList>
+                <TabPanels>
+                    <TabPanel>
                         <VStack spacing={3}>
                             <FormControl>
-                                <FormLabel>Event Name</FormLabel>
+                                <FormLabel>Name</FormLabel>
                                 <Input name='name' value={event.name} onChange={handleInputChange}/>
                             </FormControl>
                             <FormControl>
@@ -197,54 +158,36 @@ function Events() {
                                 <FormHelperText>0 for unlimited entry</FormHelperText>
                             </FormControl>
                         </VStack>
-                    </DrawerBody>
+                        <Box mt={5}>
+                            <Button variant='outline' mr={3}>
+                                Reset
+                            </Button>
+                            <Button colorScheme='blue'>
+                                Save
+                            </Button>
+                            <Button colorScheme='red' float='right' onClick={onOpen}>
+                                Delete Event
+                            </Button>
+                        </Box>
+                    </TabPanel>
+                    <TabPanel>
+                        <Table variant="simple">
+                            <Thead>
+                                <Tr>
+                                    <Th>Team</Th>
+                                    <Th>Seeding</Th>
+                                    <Th>Action</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
 
-                    <DrawerFooter>
-                        <Button variant='outline' mr={3} onClick={onClose}>
-                            Cancel
-                        </Button>
-                        <Button colorScheme='blue' onClick={handleSubmit}>
-                            Save
-                        </Button>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
-
-            <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
-                <Heading ml={6} mt={2}>Events</Heading>
-                <Box w={'40%'}>
-                    <Input placeholder="Search events" value={search} onChange={handleSearch}/>
-                </Box>
-                <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={handleOpen}>
-                    Add Event
-                </Button>
-            </Flex>
-            <Table variant="simple">
-                <Thead>
-                    <Tr>
-                        <Th>Name</Th>
-                        <Th>Type</Th>
-                        <Th>Gender</Th>
-                        <Th>Fee</Th>
-                        <Th>Max Entry</Th>
-                        <Th>Draw Status</Th>
-                    </Tr>
-                </Thead>
-                <Tbody>
-                    {events.filter(event => event.name.toLowerCase().includes(search.toLowerCase())).map((event, index) => (
-                        <Tr key={index}  _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => navigate("/tm/" + id + "/event/" + event.id)}>
-                            <Td>{event.name}</Td>
-                            <Td>{event.type === 'S' ? "Single" : "Double"}</Td>
-                            <Td>{event.gender === 'M' ? 'Male' : 'Female'}</Td>
-                            <Td>{event.fee}</Td>
-                            <Td>{event.max_entry}</Td>
-                            <Td>{event.draw_status}</Td>
-                        </Tr>
-                    ))}
-                </Tbody>
-            </Table>
+                            </Tbody>
+                        </Table>
+                    </TabPanel>
+                </TabPanels>
+            </Tabs>
         </Box>
     );
 }
 
-export default Events;
+export default EventDetail;
