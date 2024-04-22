@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {useNavigate, useParams, useRoutes} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {
     Box,
     Button,
@@ -10,7 +10,6 @@ import {
     StatLabel,
     StatNumber,
     Text,
-    useColorModeValue
 } from "@chakra-ui/react";
 import {
     FaCalendarAlt,
@@ -37,7 +36,7 @@ function Dashboard() {
 
     const data = [
         { title: 'Entries', stat: entries.toString(), icon: <FaFileSignature size={'3em'} /> },
-        { title: 'Days', stat: days.toString(), icon: <FaPlane size={'3em'} /> },
+        { title: 'Days', stat: (days+1).toString(), icon: <FaPlane size={'3em'} /> },
         { title: 'Events', stat: events.toString(), icon: <FaClock size={'3em'} /> },
         { title: 'Matches', stat: matches.toString(), icon: <FaCalendarAlt size={'3em'} /> },
         { title: 'Scheduled Matches', stat: scheduledMatches.toString(), icon: <FaCalendarDay size={'3em'} /> },

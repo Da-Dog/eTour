@@ -105,9 +105,10 @@ function Events() {
     }
 
     const handleInputChange = (e) => {
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
         setEvent({
             ...event,
-            [e.target.name]: e.target.value
+            [e.target.name]: value
         });
     }
 
