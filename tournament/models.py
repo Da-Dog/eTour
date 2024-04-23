@@ -93,8 +93,7 @@ class Match(models.Model):
     match = models.IntegerField()
     team1 = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name='team1', null=True, blank=True)
     team2 = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name='team2', null=True, blank=True)
-    score1 = models.IntegerField(null=True, blank=True) # score = -1 Bye
-    score2 = models.IntegerField(null=True, blank=True)
+    score = models.CharField(max_length=20, null=True, blank=True) # score = -1 Bye, format: 0-0,0-0,0-0
     scheduled_start_time = models.DateTimeField(null=True, blank=True)
     actual_start_time = models.DateTimeField(null=True, blank=True)
     actual_end_time = models.DateTimeField(null=True, blank=True)

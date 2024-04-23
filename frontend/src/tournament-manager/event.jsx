@@ -73,18 +73,21 @@ function Events() {
             alert('Please enter max entry');
             return;
         }
-        addEvent(id, event).then((id) => {
-            onClose();
-            setEvents([...events, {
-                id: id,
-                name: event.name,
-                type: event.type,
-                gender: event.gender,
-                fee: parseFloat(event.fee).toFixed(2),
-                max_entry: event.max_entry === 0 ? 'No Limit' : event.max_entry,
-                draw_status: "Pending"
-        }])
-            ;
+        addEvent(id, event).then((response) => {
+            if (response.error) {
+                alert(response.error);
+            } else {
+                onClose();
+                setEvents([...events, {
+                    id: id,
+                    name: event.name,
+                    type: event.type,
+                    gender: event.gender,
+                    fee: parseFloat(event.fee).toFixed(2),
+                    max_entry: event.max_entry === 0 ? 'No Limit' : event.max_entry,
+                    draw_status: "Pending"
+                }]);
+            }
         });
     };
 

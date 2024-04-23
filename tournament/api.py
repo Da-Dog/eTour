@@ -115,10 +115,10 @@ def tournament_dashboard(request, tournament_id: str):
             matches += i.match_set.count()
         scheduled_matches = 0
         for i in tournament.event_set.all():
-            scheduled_matches += i.match_set.filter(score1__isnull=True).count()
+            scheduled_matches += i.match_set.filter(score__isnull=True).count()
         completed_matches = 0
         for i in tournament.event_set.all():
-            completed_matches += i.match_set.filter(score1__isnull=False).count()
+            completed_matches += i.match_set.filter(score__isnull=False).count()
         courts = []
         for i in tournament.court_set.all():
             courts.append({
@@ -285,5 +285,79 @@ def add_event(request, tournament_id: str, event_schema: EventSchema):
         event = Event(**event_schema.dict(), tournament=tournament)
         event.save()
         return {"id": event.id}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}", auth=JWTAuth())
+def event_detail(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            return {
+                "name": event.name,
+                "type": event.type,
+                "gender": event.gender,
+                "fee": event.fee,
+                "max_entry": event.max_entry,
+                "scoring_format": event.scoring_format,
+                "arrangement": event.arrangement,
+                "playoff": event.playoff,
+                "consolation": event.consolation,
+                "full_feed_last_round": event.full_feed_last_round,
+                "players": list(tournament.participants.all().values("id", "first_name", "last_name")),
+                "entries": list(event.entry_set.all().values("id", "participant", "partner", "seed")),
+            }
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.put("/tournament/{tournament_id}/events/{event_id}", auth=JWTAuth())
+def update_event(request, tournament_id: str, event_id: str, event_schema: EventSchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            if tournament.event_set.filter(name=event_schema.name).exists() and event.name != event_schema.name:
+                return {"error": "Event already exists."}
+            elif event_schema.type not in ["S", "D", "M"]:
+                return {"error": "Invalid event type."}
+            elif event_schema.scoring_format not in ["S", "O"]:
+                return {"error": "Invalid scoring format."}
+            elif event_schema.arrangement not in ["E", "R", "EC", "RP"]:
+                return {"error": "Invalid arrangement."}
+            elif event_schema.consolation not in ["N", "FR", "FM", "FF"]:
+                return {"error": "Invalid consolation."}
+            event.name = event_schema.name
+            event.type = event_schema.type
+            event.gender = event_schema.gender
+            event.fee = event_schema.fee
+            event.max_entry = event_schema.max_entry
+            event.scoring_format = event_schema.scoring_format
+            event.arrangement = event_schema.arrangement
+            event.playoff = event_schema.playoff
+            event.consolation = event_schema.consolation
+            event.full_feed_last_round = event_schema.full_feed_last_round
+            event.save()
+            return {"message": "Event updated successfully!"}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.delete("/tournament/{tournament_id}/events/{event_id}", auth=JWTAuth())
+def delete_event(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            event.delete()
+            return {"message": "Event deleted successfully!"}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
     except ObjectDoesNotExist:
         return {"error": "Tournament not found."}

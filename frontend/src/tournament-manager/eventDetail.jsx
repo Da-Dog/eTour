@@ -15,14 +15,14 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Select,
+    Select as ChakraSelect,
     Tab,
     Table,
     TabList,
     TabPanel,
     TabPanels,
     Tabs,
-    Tbody,
+    Tbody, Td,
     Text,
     Textarea,
     Th,
@@ -31,47 +31,15 @@ import {
     useDisclosure,
     VStack
 } from "@chakra-ui/react";
-import {useParams} from "react-router-dom";
+import Select from "react-select";
+import {useNavigate, useParams} from "react-router-dom";
 import {FaPlus, FaRandom} from "react-icons/fa";
-import {useState} from "react";
-
-import TeamInput from "./teamInputField.jsx";
+import {useEffect, useState} from "react";
+import {deleteEvent, getEvent, updateEvent} from "../api.jsx";
 
 function EventDetail() {
     const {id, event_id} = useParams();
-    const [events, setEvents] = useState([]);
-    const [entries, setEntries] = useState([
-        {
-            entry_id: 1,
-            player: 'John Doe',
-            partner: 'Jane Doe',
-            seeding: 'A1',
-        },
-        {
-            entry_id: 2,
-            player: 'James Smith',
-            partner: 'Jessica Smith',
-            seeding: 'B1',
-        },
-        {
-            entry_id: 3,
-            player: 'Robert Johnson',
-            partner: 'Rebecca Johnson',
-            seeding: 'C1',
-        },
-        {
-            entry_id: 4,
-            player: 'Michael Williams',
-            partner: 'Michelle Williams',
-            seeding: 'D1',
-        },
-        {
-            entry_id: 5,
-            player: 'David Brown',
-            partner: 'Diana Brown',
-            seeding: 'E1',
-        },
-    ]);
+    const [entries, setEntries] = useState([]);
     const [matches, setMatches] = useState([]);
     const [event, setEvent] = useState({
         name: '',
@@ -112,6 +80,12 @@ function EventDetail() {
     const [tabIndex, setTabIndex] = useState(0);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose } = useDisclosure();
+    const { isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose } = useDisclosure();
+
+    const [players, setPlayers] = useState([]);
+    const [entriesSelect, setEntriesSelect] = useState([]);
+
+    const navigate = useNavigate();
 
     const handleInputChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -130,9 +104,62 @@ function EventDetail() {
     }
 
     const handleDeleteConfirm = () => {
-        console.log('delete');
-        // Call api to delete
+        deleteEvent(id, event_id).then(() => {
+            navigate('/tm/' + id + '/event');
+        });
     }
+
+    const handleSave = () => {
+        updateEvent(id, event_id, event).then(response => {
+            if (response.error) {
+                alert(response.error);
+            } else {
+               alert('Saved');
+            }
+        });
+    }
+
+    useEffect(() => {
+        getEvent(id, event_id).then(response => {
+            setEvent({
+                name: response.name,
+                type: response.type,
+                gender: response.gender,
+                fee: response.fee,
+                max_entry: response.max_entry,
+                scoring_format: response.scoring_format,
+                arrangement: response.arrangement,
+                playoff: response.playoff,
+                consolation: response.consolation,
+                full_feed_last_round: response.full_feed_last_round,
+            });
+            setEntries(response.entries.map(entry => {
+                return {
+                    entry_id: entry.id,
+                    player: entry.participant,
+                    partner: entry.partner,
+                    seeding: entry.seed,
+                }
+            }));
+            setPlayers(response.players.map(player => {
+                return {
+                    value: player.id,
+                    label: player.first_name + ' ' + player.last_name
+                }
+            }));
+        });
+    }, [event_id, id]);
+
+    useEffect(() => {
+        if (isMatchOpen) {
+            setEntriesSelect(entries.map(entry => {
+                return {
+                    value: entry.entry_id,
+                    label: entry.player + (entry.partner ? ' / ' + entry.partner : '')
+                }
+            }));
+        }
+    }, [isMatchOpen, entries]);
 
     return (
         <Box p={5}>
@@ -158,6 +185,53 @@ function EventDetail() {
                 </ModalContent>
             </Modal>
 
+            <Modal isOpen={isEntryOpen} onClose={onEntryClose} size='lg'>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Entry - {entry.entry_id === 0 ?  "New" : entry.entry_id}</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <VStack spacing={3}>
+                            <FormControl>
+                                <FormLabel>Player</FormLabel>
+                                <Select
+                                    name='player'
+                                    value={players.find(option => option.value === entry.player)}
+                                    onChange={(option) => setEntry({...entry, player: option.value})}
+                                    options={players}
+                                    isSearchable
+                                />
+                            </FormControl>
+                            {event.type === 'D' ? (
+                                <FormControl>
+                                    <FormLabel>Partner</FormLabel>
+                                    <Select
+                                        name='partner'
+                                        value={players.find(option => option.value === entry.partner)}
+                                        onChange={(option) => setEntry({...entry, partner: option.value})}
+                                        options={players}
+                                        isSearchable
+                                    />
+                                </FormControl>
+                            ): <></>}
+                            <FormControl>
+                                <FormLabel>Seeding</FormLabel>
+                                <Input type='number' name='seeding' value={entry.seeding} onChange={(e) => setEntry({...entry, seeding: e.target.value})}/>
+                            </FormControl>
+                        </VStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button variant="ghost" mr={3} onClick={onEntryClose}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue">
+                            Save
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
             <Modal isOpen={isMatchOpen} onClose={onMatchClose} size='lg'>
                 <ModalOverlay />
                 <ModalContent>
@@ -171,7 +245,7 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Round</FormLabel>
-                                <Select name='type' value={match.round} onChange={handleMatchInputChange}>
+                                <ChakraSelect name='type' value={match.round} isDisabled>
                                     <option value="A">Additional</option>
                                     <option value="F">Final</option>
                                     <option value="SF">Semi Final</option>
@@ -182,14 +256,32 @@ function EventDetail() {
                                     <option value="128">Round 128</option>
                                     <option value="256">Round 256</option>
                                     <option value="512">Round 512</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Court</FormLabel>
                                 <Input type='number' name='court' value={match.court} onChange={handleMatchInputChange}/>
                             </FormControl>
-                            <TeamInput team='team1' match={match} setMatch={setMatch} entries={entries} />
-                            <TeamInput team='team2' match={match} setMatch={setMatch} entries={entries} />
+                            <FormControl>
+                                <FormLabel>Team 1</FormLabel>
+                                <Select
+                                    name='team1'
+                                    value={entriesSelect.find(option => option.value === match.team1)}
+                                    onChange={(option) => setMatch({...match, team1: option.value})}
+                                    options={entriesSelect}
+                                    isSearchable
+                                />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Team 2</FormLabel>
+                                <Select
+                                    name='team2'
+                                    value={entriesSelect.find(option => option.value === match.team2)}
+                                    onChange={(option) => setMatch({...match, team2: option.value})}
+                                    options={entriesSelect}
+                                    isSearchable
+                                />
+                            </FormControl>
                             <FormControl>
                                 <FormLabel>Score</FormLabel>
                                 <Flex>
@@ -234,7 +326,7 @@ function EventDetail() {
             <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
                 <Heading ml={6} mt={2}  w={'75%'} isTruncated>Event Detail - {event.name}</Heading>
                 {tabIndex === 1 ?
-                    <Button colorScheme="teal" leftIcon={<FaPlus/>}>
+                    <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onEntryOpen}>
                         Add Entry
                     </Button> : <></>
                 }
@@ -266,10 +358,10 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Gender</FormLabel>
-                                <Select name='gender' value={event.gender} onChange={handleInputChange}>
+                                <ChakraSelect name='gender' value={event.gender} onChange={handleInputChange}>
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Fee</FormLabel>
@@ -277,35 +369,35 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Type</FormLabel>
-                                <Select name='type' value={event.type} onChange={handleInputChange}>
+                                <ChakraSelect name='type' value={event.type} onChange={handleInputChange}>
                                     <option value="S">Single</option>
                                     <option value="D">Double</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Scoring Format</FormLabel>
-                                <Select name='scoring_format' value={event.scoring_format} onChange={handleInputChange}>
+                                <ChakraSelect name='scoring_format' value={event.scoring_format} onChange={handleInputChange}>
                                     <option value="S">Standard</option>
                                     <option value="O">One Set</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Arrangement</FormLabel>
-                                <Select name='arrangement' value={event.arrangement} onChange={handleInputChange}>
+                                <ChakraSelect name='arrangement' value={event.arrangement} onChange={handleInputChange}>
                                     <option value="E">Elimination</option>
                                     <option value="R">Round Robin</option>
                                     <option value="EC">Elimination Consolation</option>
                                     <option value="RP">Round Robin Playoff</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Consolation</FormLabel>
-                                <Select name='consolation' value={event.consolation} onChange={handleInputChange}>
+                                <ChakraSelect name='consolation' value={event.consolation} onChange={handleInputChange}>
                                     <option value="N">None</option>
                                     <option value="FR">First Round</option>
                                     <option value="FM">First Match</option>
                                     <option value="FF">Full Feed</option>
-                                </Select>
+                                </ChakraSelect>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Playoff</FormLabel>
@@ -314,7 +406,7 @@ function EventDetail() {
                             {event.consolation === 'FF' && (
                                 <FormControl>
                                     <FormLabel>Full Feed Last Round</FormLabel>
-                                    <Select name='full_feed_last_round' value={event.full_feed_last_round}
+                                    <ChakraSelect name='full_feed_last_round' value={event.full_feed_last_round}
                                             onChange={handleInputChange}>
                                         <option value="F">Final</option>
                                         <option value="S">Semi</option>
@@ -322,7 +414,7 @@ function EventDetail() {
                                         <option value="16">16th</option>
                                         <option value="32">32nd</option>
                                         <option value="64">64th</option>
-                                    </Select>
+                                    </ChakraSelect>
                                 </FormControl>
                             )}
                             <FormControl>
@@ -336,7 +428,7 @@ function EventDetail() {
                             <Button variant='outline' mr={3}>
                                 Reset
                             </Button>
-                            <Button colorScheme='blue'>
+                            <Button colorScheme='blue' onClick={handleSave}>
                                 Save
                             </Button>
                             <Button colorScheme='red' float='right' onClick={onOpen}>
@@ -355,7 +447,21 @@ function EventDetail() {
                                 </Tr>
                             </Thead>
                             <Tbody>
-
+                                {entries.map((entry, index) => (
+                                    <Tr key={entry.entry_id}>
+                                        <Th>{index + 1}</Th>
+                                        <Td>
+                                            <Text textTransform='capitalize'>{players.find((element) => element.value === entry.player)?.label}</Text>
+                                            <Text textTransform='capitalize'>{entry.partner ? players.find((element) => element.value === entry.partner)?.label : ''}</Text>
+                                        </Td>
+                                        <Td>{entry.seeding}</Td>
+                                        <Td>
+                                            <Button size='sm' colorScheme='red'>
+                                                Delete
+                                            </Button>
+                                        </Td>
+                                    </Tr>
+                                ))}
                             </Tbody>
                         </Table>
                     </TabPanel>

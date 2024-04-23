@@ -369,7 +369,78 @@ export const addEvent = async (tournamentId, event) => {
         if (response.status !== 200) {
             alert("Failed to add event");
         } else {
-            return response.data.id;
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getEvent = async (tournamentId, eventId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch event");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const updateEvent = async (tournamentId, eventId, event) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
+            name: event.name,
+            type: event.type,
+            gender: event.gender,
+            fee:  parseFloat(event.fee),
+            max_entry: event.max_entry,
+            scoring_format: event.scoring_format,
+            arrangement: event.arrangement,
+            playoff: event.playoff,
+            consolation: event.consolation,
+            full_feed_last_round: event.full_feed_last_round ? event.full_feed_last_round : null
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to add event");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const deleteEvent = async (tournamentId, eventId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to delete event");
+        } else {
+            alert("Event deleted successfully");
         }
     } catch (error) {
         alert(error);
