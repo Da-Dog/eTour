@@ -79,7 +79,7 @@ function Events() {
             } else {
                 onClose();
                 setEvents([...events, {
-                    id: id,
+                    id: event.id,
                     name: event.name,
                     type: event.type,
                     gender: event.gender,
