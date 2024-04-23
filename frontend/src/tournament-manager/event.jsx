@@ -74,7 +74,7 @@ function Events() {
             return;
         }
         addEvent(id, event).then((response) => {
-            if (response.error) {
+            if ("error" in response) {
                 alert(response.error);
             } else {
                 onClose();

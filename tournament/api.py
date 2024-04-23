@@ -5,7 +5,7 @@ from ninja_jwt.controller import NinjaJWTDefaultController
 from datetime import datetime
 
 from .models import Tournament, Participant, Entry, Event
-from .schema import TournamentSchema, ParticipantSchema, EventSchema
+from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
@@ -357,6 +357,119 @@ def delete_event(request, tournament_id: str, event_id: str):
             event = tournament.event_set.get(id=event_id)
             event.delete()
             return {"message": "Event deleted successfully!"}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/entries", auth=JWTAuth())
+def event_entries(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            return {
+                "entries": list(event.entry_set.all().values("id", "participant", "partner", "seed")),
+            }
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.post("/tournament/{tournament_id}/events/{event_id}/entries", auth=JWTAuth())
+def add_entry(request, tournament_id: str, event_id: str, entry_schema: EntrySchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            if event.entry_set.filter(participant=entry_schema.participant, partner=entry_schema.partner).exists():
+                return {"error": "Entry already exists."}
+            elif event.entry_set.filter(partner=entry_schema.participant, participant=entry_schema.partner).exists():
+                return {"error": "Entry already exists."}
+            elif event.type == "S" and entry_schema.partner:
+                return {"error": "Singles event cannot have a partner."}
+            elif event.type == "D" and not entry_schema.partner:
+                return {"error": "Doubles event must have a partner."}
+            elif event.type == "D" and entry_schema.participant == entry_schema.partner:
+                return {"error": "Doubles partners must be different."}
+            entry = Entry(participant=tournament.participants.get(id=entry_schema.participant),
+                          partner=tournament.participants.get(id=entry_schema.partner), event=event)
+            entry.save()
+            return {"id": entry.id}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/entries/{entry_id}", auth=JWTAuth())
+def entry_detail(request, tournament_id: str, event_id: str, entry_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            try:
+                entry = event.entry_set.get(id=entry_id)
+                return {
+                    "participant": entry.participant,
+                    "partner": entry.partner,
+                    "seed": entry.seed,
+                }
+            except ObjectDoesNotExist:
+                return {"error": "Entry not found."}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.put("/tournament/{tournament_id}/events/{event_id}/entries/{entry_id}", auth=JWTAuth())
+def update_entry(request, tournament_id: str, event_id: str, entry_id: str, entry_schema: EntrySchema):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            try:
+                entry = event.entry_set.get(id=entry_id)
+                if event.entry_set.filter(participant=entry_schema.participant, partner=entry_schema.partner).exists() \
+                        and (str(entry.participant.id) != entry_schema.participant or str(entry.partner.id) != entry_schema.partner):
+                    return {"error": "Entry already exists."}
+                elif event.entry_set.filter(partner=entry_schema.participant, participant=entry_schema.partner).exists() \
+                        and (str(entry.participant.id) != entry_schema.partner or str(entry.partner.id) != entry_schema.participant):
+                    return {"error": "Entry already exists."}
+                elif event.type == "S" and entry_schema.partner:
+                    return {"error": "Singles event cannot have a partner."}
+                elif event.type == "D" and not entry_schema.partner:
+                    return {"error": "Doubles event must have a partner."}
+                elif event.type == "D" and entry_schema.participant == entry_schema.partner:
+                    return {"error": "Doubles partners must be different."}
+                entry.participant = tournament.participants.get(id=entry_schema.participant)
+                entry.partner = tournament.participants.get(id=entry_schema.partner)
+                entry.seed = entry_schema.seed
+                entry.save()
+                return {"message": "Entry updated successfully!"}
+            except ObjectDoesNotExist:
+                return {"error": "Entry not found."}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.delete("/tournament/{tournament_id}/events/{event_id}/entries/{entry_id}", auth=JWTAuth())
+def delete_entry(request, tournament_id: str, event_id: str, entry_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            try:
+                entry = event.entry_set.get(id=entry_id)
+                entry.delete()
+                return {"message": "Entry deleted successfully!"}
+            except ObjectDoesNotExist:
+                return {"error": "Entry not found."}
         except ObjectDoesNotExist:
             return {"error": "Event not found."}
     except ObjectDoesNotExist:

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Cookies from "js-cookie";
-import dashboard from "./tournament-manager/dashboard.jsx";
 
 export const login = async (email, password) => {
     const response = await axios.post('http://127.0.0.1:8000/token/pair', {
@@ -418,7 +417,7 @@ export const updateEvent = async (tournamentId, eventId, event) => {
         });
 
         if (response.status !== 200) {
-            alert("Failed to add event");
+            alert("Failed to update event");
         } else {
             return response.data;
         }
@@ -441,6 +440,76 @@ export const deleteEvent = async (tournamentId, eventId) => {
             alert("Failed to delete event");
         } else {
             alert("Event deleted successfully");
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const addEntry = async (tournamentId, eventId, entry) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.post(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries`, {
+            participant: entry.player,
+            partner: entry.partner ? entry.partner : null,
+            seed: entry.seeding ? entry.seeding : null,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to add entry");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const updateEntry = async (tournamentId, eventId, entry) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries/${entry.entry_id}`, {
+            participant: entry.player,
+            partner: entry.partner ? entry.partner : null,
+            seed: entry.seeding ? entry.seeding : null,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to update entry");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const deleteEntry = async (tournamentId, eventId, entryId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries/${entryId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to delete entry");
+            return false;
+        } else {
+            alert("Entry deleted successfully");
+            return true;
         }
     } catch (error) {
         alert(error);

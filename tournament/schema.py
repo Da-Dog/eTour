@@ -42,3 +42,9 @@ class EventSchema(Schema):
     playoff: bool = Field(...)
     consolation: str = Field(..., min_length=1, max_length=2)
     full_feed_last_round: Optional[str] = Field(None, min_length=1, max_length=2)
+
+
+class EntrySchema(Schema):
+    participant: str
+    partner: Optional[str] = Field(None)
+    seed: Optional[int] = Field(None)

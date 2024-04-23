@@ -35,7 +35,7 @@ import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
 import {FaPlus, FaRandom} from "react-icons/fa";
 import {useEffect, useState} from "react";
-import {deleteEvent, getEvent, updateEvent} from "../api.jsx";
+import {addEntry, deleteEntry, deleteEvent, getEvent, updateEntry, updateEvent} from "../api.jsx";
 
 function EventDetail() {
     const {id, event_id} = useParams();
@@ -57,7 +57,7 @@ function EventDetail() {
         entry_id: 0,
         player: '',
         partner: '',
-        seeding: '',
+        seed: '',
     });
     const [match, setMatch] = useState({
         match_id: 0,
@@ -111,10 +111,75 @@ function EventDetail() {
 
     const handleSave = () => {
         updateEvent(id, event_id, event).then(response => {
-            if (response.error) {
+            if ("error" in response) {
                 alert(response.error);
             } else {
                alert('Saved');
+            }
+        });
+    }
+
+    const handleEntrySave = () => {
+        updateEntry(id, event_id, entry).then(response => {
+            if ("error" in response) {
+                alert(response.error);
+            } else {
+                setEntries(entries.map(entryElement => {
+                    if (entryElement.entry_id === entry.entry_id) {
+                        return {
+                            entry_id: entry.entry_id,
+                            player: entry.player,
+                            partner: entry.partner,
+                            seed: entry.seed,
+                        }
+                    }
+                    return entryElement;
+                }));
+                onEntryClose();
+            }
+        });
+    }
+
+    const handleEntryCreate = () => {
+        addEntry(id, event_id, entry).then(response => {
+            if ("error" in response) {
+                alert(response.error);
+            } else {
+                setEntries([...entries, {
+                    entry_id: response.id,
+                    player: entry.player,
+                    partner: entry.partner,
+                    seed: entry.seed,
+                }]);
+                onEntryClose();
+            }
+        });
+    }
+
+    const handleEntryEdit = (entry) => {
+        setEntry({
+            entry_id: entry.entry_id,
+            player: entry.player,
+            partner: entry.partner,
+            seed: entry.seed,
+        });
+        onEntryOpen();
+    }
+
+    const handleEntryCreateOpen = () => {
+        setEntry({
+            entry_id: 0,
+            player: '',
+            partner: '',
+            seed: '',
+        });
+        onEntryOpen();
+    }
+
+    const handleEntryDelete = (entry) => {
+        deleteEntry(id, event_id, entry).then(response => {
+            if (response) {
+                setEntries(entries.filter(entryElement => entryElement.entry_id !== entry));
             }
         });
     }
@@ -138,7 +203,7 @@ function EventDetail() {
                     entry_id: entry.id,
                     player: entry.participant,
                     partner: entry.partner,
-                    seeding: entry.seed,
+                    seed: entry.seed,
                 }
             }));
             setPlayers(response.players.map(player => {
@@ -216,7 +281,7 @@ function EventDetail() {
                             ): <></>}
                             <FormControl>
                                 <FormLabel>Seeding</FormLabel>
-                                <Input type='number' name='seeding' value={entry.seeding} onChange={(e) => setEntry({...entry, seeding: e.target.value})}/>
+                                <Input type='number' name='seed' value={entry.seed} onChange={(e) => setEntry({...entry, seed: e.target.value})}/>
                             </FormControl>
                         </VStack>
                     </ModalBody>
@@ -225,7 +290,7 @@ function EventDetail() {
                         <Button variant="ghost" mr={3} onClick={onEntryClose}>
                             Cancel
                         </Button>
-                        <Button colorScheme="blue">
+                        <Button colorScheme="blue" onClick={entry.entry_id ? handleEntrySave : handleEntryCreate}>
                             Save
                         </Button>
                     </ModalFooter>
@@ -326,7 +391,7 @@ function EventDetail() {
             <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
                 <Heading ml={6} mt={2}  w={'75%'} isTruncated>Event Detail - {event.name}</Heading>
                 {tabIndex === 1 ?
-                    <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onEntryOpen}>
+                    <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={handleEntryCreateOpen}>
                         Add Entry
                     </Button> : <></>
                 }
@@ -454,10 +519,13 @@ function EventDetail() {
                                             <Text textTransform='capitalize'>{players.find((element) => element.value === entry.player)?.label}</Text>
                                             <Text textTransform='capitalize'>{entry.partner ? players.find((element) => element.value === entry.partner)?.label : ''}</Text>
                                         </Td>
-                                        <Td>{entry.seeding}</Td>
+                                        <Td>{entry.seed}</Td>
                                         <Td>
-                                            <Button size='sm' colorScheme='red'>
+                                            <Button size='sm' colorScheme='red' onDoubleClick={() => handleEntryDelete(entry.entry_id)}>
                                                 Delete
+                                            </Button>
+                                            <Button size='sm' colorScheme='blue' ml={2} onClick={() => handleEntryEdit(entry)}>
+                                                Edit
                                             </Button>
                                         </Td>
                                     </Tr>
