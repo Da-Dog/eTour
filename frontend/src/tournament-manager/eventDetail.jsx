@@ -78,6 +78,7 @@ function EventDetail() {
     });
 
     const [tabIndex, setTabIndex] = useState(0);
+    const [drawSize, setDrawSize] = useState(2);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose } = useDisclosure();
     const { isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose } = useDisclosure();
@@ -185,7 +186,7 @@ function EventDetail() {
     }
 
     const handleAutoDraw = () => {
-        autoDraw(id, event_id).then(response => {
+        autoDraw(id, event_id, drawSize).then(response => {
             if (response.error) {
                 alert(response.error);
             } else {
@@ -222,6 +223,11 @@ function EventDetail() {
                     label: player.first_name + ' ' + player.last_name
                 }
             }));
+            if (response.entries.length > 0) {
+                setDrawSize(2 ** Math.ceil(Math.log2(response.entries.length)));
+            } else {
+                setDrawSize(2);
+            }
         });
         getMatches(id, event_id).then(response => {
             setMatches(response.matches);
@@ -326,9 +332,9 @@ function EventDetail() {
                                 <ChakraSelect name='type' value={match.round} isDisabled>
                                     <option value="A">Additional</option>
                                     <option value="R">Round Robin</option>
-                                    <option value="F">Final</option>
-                                    <option value="SF">Semi Final</option>
-                                    <option value="QF">Quarter Final</option>
+                                    <option value="2">Final</option>
+                                    <option value="4">Semi Final</option>
+                                    <option value="8">Quarter Final</option>
                                     <option value="16">Round 16</option>
                                     <option value="32">Round 32</option>
                                     <option value="64">Round 64</option>
@@ -412,12 +418,23 @@ function EventDetail() {
                         Add Entry
                     </Button> : <></>
                 }
-                {tabIndex === 2 ?
+                {tabIndex === 2 && !matches ?
                     <>
-                        <Button colorScheme="blue" leftIcon={<FaHammer/>}>
+                        <ChakraSelect name='drawSize' value={drawSize} onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%'>
+                            <option value="2">2</option>
+                            <option value="4">4</option>
+                            <option value="8">8</option>
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128">128</option>
+                            <option value="256">256</option>
+                            <option value="512">512</option>
+                        </ChakraSelect>
+                        <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6}>
                             Manual Draw
                         </Button>
-                        <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={1} onClick={handleAutoDraw}>
+                        <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={2} pl={6} pr={6} onClick={handleAutoDraw}>
                             Auto Draw
                         </Button>
                     </> : <></>

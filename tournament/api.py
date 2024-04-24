@@ -14,9 +14,9 @@ api.register_controllers(NinjaJWTDefaultController)
 
 
 ROUND_CHOICES = {
-    "F": "Final",
-    "SF": "Semi Final",
-    "QF": "Quarter Final",
+    "2": "Final",
+    "4": "Semi Final",
+    "8": "Quarter Final",
     "16": "Round 16",
     "32": "Round 32",
     "64": "Round 64",
@@ -559,7 +559,7 @@ def event_matches(request, tournament_id: str, event_id: str):
 
 
 @api.get("/tournament/{tournament_id}/events/{event_id}/auto_draw", auth=JWTAuth())
-def auto_draw(request, tournament_id: str, event_id: str):
+def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
     try:
         tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
         try:
@@ -569,33 +569,83 @@ def auto_draw(request, tournament_id: str, event_id: str):
             entries = event.entry_set.all()
             draw = []
             if event.arrangement == 'E':
-                # TODO: Rewrite auto draw
-                for i in range(0, len(entries), 2):
-                    match = Match(event=event, round=first_round, match=i // 2 + 1, team1=entries[i],
-                                  team2=entries[i + 1])
-                    # match.save()
+                if draw_size == 0:
+                    return {"error": "Draw size is required for elimination events."}
+                if draw_size < 2:
+                    return {"error": "Draw size must be at least 2."}
+                if draw_size & (draw_size - 1) != 0:
+                    return {"error": "Draw size must be a power of 2."}
+                teams = [None] * draw_size
+                seeds = [entry for entry in entries if entry.seed]
+                seeds.sort(key=lambda x: x.seed)
+                entries = [entry for entry in entries if not entry.seed]
+                random.shuffle(entries)
 
-                    if match.team1 and not match.team2:
-                        team1 = str(match.team1)
-                        team2 = "Bye"
-                    elif not match.team1 and match.team2:
-                        team1 = "Bye"
-                        team2 = str(match.team2)
+                index = 0
+                reversed_index = len(teams) - 1
+                top = True
+                for seed in seeds:
+                    if top:
+                        teams[index] = seed
+                        if entries:
+                            teams[index + 1] = entries.pop(0)
+                        index += 2
+                        top = False
                     else:
-                        team1 = str(match.team1)
-                        team2 = str(match.team2)
+                        teams[reversed_index] = seed
+                        if entries:
+                            teams[reversed_index - 1] = entries.pop(0)
+                        reversed_index -= 2
+                        top = True
+                reversed_index = len(teams) - 1
+                for i in range(len(teams)):
+                    if not teams[i]:
+                        if entries:
+                            teams[i] = entries.pop(0)
+                    if not teams[reversed_index]:
+                        if entries:
+                            teams[reversed_index] = entries.pop(0)
+                    reversed_index -= 1
+
+                match_number = Match.objects.filter(event__tournament=tournament).count() + 1
+
+                for i in range(0, len(teams), 2):
+                    match = Match(event=event, round=draw_size, match=match_number, team1=teams[i],
+                                  team2=teams[i + 1])
+                    # match.save()
+                    match_number += 1
 
                     match_info = {
                         "round": ROUND_CHOICES.get(str(match.round), str(match.round)),
                         "time": "",
                         "match": match.match,
-                        "team1": team1,
-                        "team2": team2,
+                        "team1": str(match.team1) if match.team1 else "Bye",
+                        "team2": str(match.team2) if match.team2 else "Bye",
                         "score": "",
                         "duration": "",
                         "court": "",
                     }
                     draw.append(match_info)
+                draw_size = draw_size // 2
+
+                while draw_size > 1:
+                    for i in range(0, draw_size, 2):
+                        match = Match(event=event, round=draw_size, match=match_number)
+                        # match.save()
+                        match_number += 1
+
+                        match_info = {
+                            "round": ROUND_CHOICES.get(str(match.round), str(match.round)),
+                            "time": "",
+                            "match": match.match,
+                            "team1": "",
+                            "team2": "",
+                            "score": "",
+                            "duration": "",
+                            "court": "",
+                        }
+                        draw.append(match_info)
+                    draw_size = draw_size // 2
             # TODO: Pools, Round Robin, Elimination Cons
             return {"draw": draw}
         except ObjectDoesNotExist:

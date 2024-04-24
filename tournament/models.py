@@ -89,8 +89,8 @@ class Match(models.Model):
     id = models.AutoField(primary_key=True)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     court = models.ForeignKey(Court, on_delete=models.CASCADE, null=True, blank=True)
-    round = models.CharField(max_length=3)  # R - Round Robin, RG1 - Round Robin Group 1, A - Additional, F - Final,
-    # SF - Semi Final, QF - Quarter Final, 16 - Round 16, 32 - Round 32...
+    round = models.CharField(max_length=3)  # R - Round Robin, RG1 - Round Robin Group 1, A - Additional, 2 - Final,
+    # 4 - Semi Final, 8 - Quarter Final, 16 - Round 16, 32 - Round 32...
     match = models.IntegerField()
     team1 = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name='team1', null=True, blank=True)
     team2 = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name='team2', null=True, blank=True)

@@ -515,14 +515,16 @@ export const deleteEntry = async (tournamentId, eventId, entryId) => {
     }
 }
 
-export const autoDraw = async (tournamentId, eventId) => {
+export const autoDraw = async (tournamentId, eventId, drawSize) => {
     let token = Cookies.get('token');
     try {
         let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/auto_draw`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
-        }});
+            },
+            params: {draw_size: drawSize}
+        });
 
         if (response.status !== 200) {
             alert("Failed to auto draw");
