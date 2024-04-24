@@ -420,7 +420,7 @@ function EventDetail() {
                 }
                 {tabIndex === 2 && !matches ?
                     <>
-                        <ChakraSelect name='drawSize' value={drawSize} onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%'>
+                        <b>Size:</b><ChakraSelect name='drawSize' value={drawSize} onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%' ml={1}>
                             <option value="2">2</option>
                             <option value="4">4</option>
                             <option value="8">8</option>
@@ -437,7 +437,7 @@ function EventDetail() {
                         <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={2} pl={6} pr={6} onClick={handleAutoDraw}>
                             Auto Draw
                         </Button>
-                    </> : <></>
+                    </>: <></>
                 }
                 {tabIndex === 3 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onMatchOpen}>

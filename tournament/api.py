@@ -9,6 +9,8 @@ from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchem
 
 import random, math
 
+from .utils import map_next_match
+
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
 
@@ -531,15 +533,17 @@ def event_matches(request, tournament_id: str, event_id: str):
                 else:
                     duration_str = ""
 
-                if match.team1 and not match.team2:
+                if match.team1 and not match.team2 and match.score == "1-0":
                     team1 = str(match.team1)
                     team2 = "Bye"
-                elif not match.team1 and match.team2:
+                    match.score = ""
+                elif not match.team1 and match.team2 and match.score == "0-1":
                     team1 = "Bye"
                     team2 = str(match.team2)
+                    match.score = ""
                 else:
-                    team1 = str(match.team1)
-                    team2 = str(match.team2)
+                    team1 = str(match.team1) if match.team1 else ""
+                    team2 = str(match.team2) if match.team2 else ""
 
                 draw.append({
                     "round": ROUND_CHOICES.get(match.round, match.round),
@@ -610,9 +614,15 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
                 match_number = Match.objects.filter(event__tournament=tournament).count() + 1
 
                 for i in range(0, len(teams), 2):
+                    if teams[i] and not teams[i + 1]:
+                        score = "1-0"
+                    elif not teams[i] and teams[i + 1]:
+                        score = "0-1"
+                    else:
+                        score = ""
                     match = Match(event=event, round=draw_size, match=match_number, team1=teams[i],
-                                  team2=teams[i + 1])
-                    # match.save()
+                                  team2=teams[i + 1], score=score)
+                    match.save()
                     match_number += 1
 
                     match_info = {
@@ -631,7 +641,7 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
                 while draw_size > 1:
                     for i in range(0, draw_size, 2):
                         match = Match(event=event, round=draw_size, match=match_number)
-                        # match.save()
+                        match.save()
                         match_number += 1
 
                         match_info = {
@@ -646,6 +656,18 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
                         }
                         draw.append(match_info)
                     draw_size = draw_size // 2
+
+                for i in draw:
+                    if i['team1'] == "Bye" or i['team2'] == "Bye":
+                        bye_match = Match.objects.get(event=event, match=i['match'])
+                        next_match = Match.objects.get(event=event,
+                                                       match=map_next_match(bye_match.match, int(bye_match.round), event))
+                        next_match.team1 = bye_match.team1 if bye_match.team1 else bye_match.team2
+                        next_match.save()
+                        for j in draw:
+                            if j['match'] == next_match.match:
+                                j['team1'] = str(next_match.team1)
+                                break
             # TODO: Pools, Round Robin, Elimination Cons
             return {"draw": draw}
         except ObjectDoesNotExist:
