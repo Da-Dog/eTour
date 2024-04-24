@@ -4,8 +4,10 @@ from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
 from datetime import datetime
 
-from .models import Tournament, Participant, Entry, Event
+from .models import Tournament, Participant, Entry, Event, Match
 from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema
+
+import random, math
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
@@ -470,6 +472,81 @@ def delete_entry(request, tournament_id: str, event_id: str, entry_id: str):
                 return {"message": "Entry deleted successfully!"}
             except ObjectDoesNotExist:
                 return {"error": "Entry not found."}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/draw", auth=JWTAuth())
+def event_draw(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            matches = event.match_set.exclude(round="A")
+            if not matches:
+                return {"draw": False}
+            draw = []
+            for match in matches:
+                draw.append({
+                    "round": match.round,
+                    "match": match.match,
+                    "team1": match.team1,
+                    "team2": match.team2,
+                    "score": match.score.split(",") if match.score else "",
+                })
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/auto_draw", auth=JWTAuth())
+def auto_draw(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            if event.match_set.exclude(round="A").exists():
+                return {"error": "Draw already exists."}
+            entries = event.entry_set.all()
+            draw = []
+            if event.arrangement == 'E':
+                seeds = [entry for entry in entries if entry.seed]
+                seeds.sort(key=lambda x: x.seed)
+                entries = [entry for entry in entries if not entry.seed]
+                for i in range(0, len(seeds), 2):
+                    entries.insert(i + 1, seeds[i])
+                
+                first_round = 2 ** math.ceil(math.log2(len(entries)))
+                if len(entries) % 2 != 0:
+                    entries.append(None)
+                for i in range(0, len(entries), 2):
+                    match = Match(event=event, round=first_round, match=i // 2 + 1, team1=entries[i],
+                                  team2=entries[i + 1])
+                    # match.save()
+                    draw.append({
+                        "round": match.round,
+                        "match": match.match,
+                        "team1": match.team1,
+                        "team2": match.team2,
+                        "score": match.score.split(",") if match.score else "",
+                    })
+            elif event.arrangement == 'R':
+                for i in range(len(entries)):
+                    for j in range(i + 1, len(entries)):
+                        match = Match(event=event, round="R", match=1, team1=entries[i], team2=entries[j])
+                        # match.save()
+                        draw.append({
+                            "round": match.round,
+                            "match": match.match,
+                            "team1": match.team1,
+                            "team2": match.team2,
+                            "score": match.score.split(",") if match.score else "",
+                        })
+            # TODO: Pools
+            return {"draw": draw}
         except ObjectDoesNotExist:
             return {"error": "Event not found."}
     except ObjectDoesNotExist:

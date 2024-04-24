@@ -312,6 +312,7 @@ function EventDetail() {
                                 <FormLabel>Round</FormLabel>
                                 <ChakraSelect name='type' value={match.round} isDisabled>
                                     <option value="A">Additional</option>
+                                    <option value="R">Round Robin</option>
                                     <option value="F">Final</option>
                                     <option value="SF">Semi Final</option>
                                     <option value="QF">Quarter Final</option>
