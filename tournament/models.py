@@ -72,7 +72,7 @@ class Entry(models.Model):
     seed = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return self.event.name + ' - ' + self.participant.first_name + ' ' + self.participant.last_name
+        return self.participant.first_name + ' ' + self.participant.last_name + ((' / ' + self.partner.first_name + ' ' + self.partner.last_name) if self.partner else '')
 
 
 class Court(models.Model):

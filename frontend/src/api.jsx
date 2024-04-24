@@ -476,7 +476,7 @@ export const updateEntry = async (tournamentId, eventId, entry) => {
         let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries/${entry.entry_id}`, {
             participant: entry.player,
             partner: entry.partner ? entry.partner : null,
-            seed: entry.seeding ? entry.seeding : null,
+            seed: entry.seed ? entry.seed : null,
         }, {
             headers: {
                 'Content-Type': 'application/json',
@@ -508,8 +508,46 @@ export const deleteEntry = async (tournamentId, eventId, entryId) => {
             alert("Failed to delete entry");
             return false;
         } else {
-            alert("Entry deleted successfully");
             return true;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const autoDraw = async (tournamentId, eventId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/auto_draw`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+        }});
+
+        if (response.status !== 200) {
+            alert("Failed to auto draw");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getMatches = async (tournamentId, eventId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/matches`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch matches");
+        } else {
+            return response.data;
         }
     } catch (error) {
         alert(error);

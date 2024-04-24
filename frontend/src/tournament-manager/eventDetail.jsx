@@ -33,9 +33,9 @@ import {
 } from "@chakra-ui/react";
 import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
-import {FaPlus, FaRandom} from "react-icons/fa";
+import {FaHammer, FaPlus, FaRandom} from "react-icons/fa";
 import {useEffect, useState} from "react";
-import {addEntry, deleteEntry, deleteEvent, getEvent, updateEntry, updateEvent} from "../api.jsx";
+import {addEntry, autoDraw, deleteEntry, deleteEvent, getEvent, getMatches, updateEntry, updateEvent} from "../api.jsx";
 
 function EventDetail() {
     const {id, event_id} = useParams();
@@ -184,6 +184,16 @@ function EventDetail() {
         });
     }
 
+    const handleAutoDraw = () => {
+        autoDraw(id, event_id).then(response => {
+            if (response.error) {
+                alert(response.error);
+            } else {
+                setMatches(response.draw);
+            }
+        });
+    }
+
     useEffect(() => {
         getEvent(id, event_id).then(response => {
             setEvent({
@@ -212,6 +222,9 @@ function EventDetail() {
                     label: player.first_name + ' ' + player.last_name
                 }
             }));
+        });
+        getMatches(id, event_id).then(response => {
+            setMatches(response.matches);
         });
     }, [event_id, id]);
 
@@ -354,12 +367,15 @@ function EventDetail() {
                                     <Input type='number' name='score1' value={match.score1} onChange={handleMatchInputChange} width="20%" mr={1}/>
                                     <Text mt={1}>-</Text>
                                     <Input type='number' name='score2' value={match.score2} onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
-                                    <Input type='number' name='score3' value={match.score3} onChange={handleMatchInputChange} width="20%" mr={1}/>
-                                    <Text mt={1}>-</Text>
-                                    <Input type='number' name='score4' value={match.score4} onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
-                                    <Input type='number' name='score5' value={match.score5} onChange={handleMatchInputChange} width="20%" mr={1}/>
-                                    <Text mt={1}>-</Text>
-                                    <Input type='number' name='score6' value={match.score6} onChange={handleMatchInputChange} width="20%" ml={1}/>
+                                    {event.scoring_format === 'S' ? <>
+                                        <Input type='number' name='score3' value={match.score3} onChange={handleMatchInputChange} width="20%" mr={1}/>
+                                        <Text mt={1}>-</Text>
+                                        <Input type='number' name='score4' value={match.score4} onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
+                                        <Input type='number' name='score5' value={match.score5} onChange={handleMatchInputChange} width="20%" mr={1}/>
+                                        <Text mt={1}>-</Text>
+                                        <Input type='number' name='score6' value={match.score6} onChange={handleMatchInputChange} width="20%" ml={1}/>
+                                    </> : <></>
+                                    }
                                 </Flex>
                                 <FormHelperText>Enter team 1 score then team 2 score</FormHelperText>
                             </FormControl>
@@ -397,9 +413,14 @@ function EventDetail() {
                     </Button> : <></>
                 }
                 {tabIndex === 2 ?
-                    <Button colorScheme="teal" leftIcon={<FaRandom/>}>
-                        Auto Draw
-                    </Button> : <></>
+                    <>
+                        <Button colorScheme="blue" leftIcon={<FaHammer/>}>
+                            Manual Draw
+                        </Button>
+                        <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={1} onClick={handleAutoDraw}>
+                            Auto Draw
+                        </Button>
+                    </> : <></>
                 }
                 {tabIndex === 3 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onMatchOpen}>
@@ -535,7 +556,9 @@ function EventDetail() {
                         </Table>
                     </TabPanel>
                     <TabPanel>
+                        <VStack spacing={8}>
 
+                        </VStack>
                     </TabPanel>
                     <TabPanel>
                         <Table variant="simple">
@@ -545,13 +568,26 @@ function EventDetail() {
                                     <Th>Time</Th>
                                     <Th>Team 1</Th>
                                     <Th>Team 2</Th>
+                                    <Th>Round</Th>
                                     <Th>Score</Th>
                                     <Th>Duration</Th>
                                     <Th>Court</Th>
                                 </Tr>
                             </Thead>
                             <Tbody>
-
+                                {matches ? matches.map((match, index) => (
+                                    <Tr key={index}>
+                                        <Th>{match.match}</Th>
+                                        <Td>{match.time}</Td>
+                                        <Td>{match.team1}</Td>
+                                        <Td>{match.team2}</Td>
+                                        <Td>{match.round}</Td>
+                                        <Td>{match.score}</Td>
+                                        <Td>{match.duration}</Td>
+                                        <Td>{match.court}</Td>
+                                    </Tr>
+                                )) : <></>
+                                }
                             </Tbody>
                         </Table>
                     </TabPanel>

@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .models import Tournament, Participant, Entry, Event, Match
 from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema
@@ -11,6 +11,19 @@ import random, math
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
+
+
+ROUND_CHOICES = {
+    "F": "Final",
+    "SF": "Semi Final",
+    "QF": "Quarter Final",
+    "16": "Round 16",
+    "32": "Round 32",
+    "64": "Round 64",
+    "128": "Round 128",
+    "256": "Round 256",
+    "512": "Round 512",
+}
 
 
 @api.get("/")
@@ -241,13 +254,15 @@ def participant_entries(request, tournament_id: str, participant_id: str):
     try:
         entries = []
         for i in list(Entry.objects.filter(participant_id=participant_id, event__tournament_id=tournament_id,
-                             event__tournament__owner=request.user).values("event__name", "partner__first_name")):
+                                           event__tournament__owner=request.user).values("event__name",
+                                                                                         "partner__first_name")):
             entries.append({
                 "event": i["event__name"],
                 "partner": i["partner__first_name"]
             })
         for i in list(Entry.objects.filter(partner_id=participant_id, event__tournament_id=tournament_id,
-                             event__tournament__owner=request.user).values("event__name", "participant__first_name")):
+                                           event__tournament__owner=request.user).values("event__name",
+                                                                                         "participant__first_name")):
             entries.append({
                 "event": i["event__name"],
                 "partner": i["participant__first_name"]
@@ -261,10 +276,12 @@ def participant_entries(request, tournament_id: str, participant_id: str):
 def tournament_events(request, tournament_id: str):
     try:
         tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
-        events = list(tournament.event_set.all().values("id", "name", "type", "gender", "fee", "max_entry", "draw_status"))
+        events = list(
+            tournament.event_set.all().values("id", "name", "type", "gender", "fee", "max_entry", "draw_status"))
         for i in events:
             i["max_entry"] = i["max_entry"] if i["max_entry"] > 0 else "No Limit"
-            i["draw_status"] = "Finalized" if i["draw_status"] == "F" else "Tentative" if i["draw_status"] == "T" else "Pending"
+            i["draw_status"] = "Finalized" if i["draw_status"] == "F" else "Tentative" if i[
+                                                                                              "draw_status"] == "T" else "Pending"
         return {"events": events}
     except ObjectDoesNotExist:
         return {"error": "Tournament not found."}
@@ -390,14 +407,19 @@ def add_entry(request, tournament_id: str, event_id: str, entry_schema: EntrySch
                 return {"error": "Entry already exists."}
             elif event.entry_set.filter(partner=entry_schema.participant, participant=entry_schema.partner).exists():
                 return {"error": "Entry already exists."}
+            elif event.entry_set.filter(participant=entry_schema.participant).exists() and not entry_schema.partner:
+                return {"error": "Entry already exists."}
             elif event.type == "S" and entry_schema.partner:
                 return {"error": "Singles event cannot have a partner."}
             elif event.type == "D" and not entry_schema.partner:
                 return {"error": "Doubles event must have a partner."}
             elif event.type == "D" and entry_schema.participant == entry_schema.partner:
                 return {"error": "Doubles partners must be different."}
-            entry = Entry(participant=tournament.participants.get(id=entry_schema.participant),
-                          partner=tournament.participants.get(id=entry_schema.partner), event=event)
+            if event.type == "S":
+                entry = Entry(participant=tournament.participants.get(id=entry_schema.participant), event=event)
+            else:
+                entry = Entry(participant=tournament.participants.get(id=entry_schema.participant),
+                              partner=tournament.participants.get(id=entry_schema.partner), event=event)
             entry.save()
             return {"id": entry.id}
         except ObjectDoesNotExist:
@@ -435,20 +457,24 @@ def update_entry(request, tournament_id: str, event_id: str, entry_id: str, entr
             event = tournament.event_set.get(id=event_id)
             try:
                 entry = event.entry_set.get(id=entry_id)
-                if event.entry_set.filter(participant=entry_schema.participant, partner=entry_schema.partner).exists() \
-                        and (str(entry.participant.id) != entry_schema.participant or str(entry.partner.id) != entry_schema.partner):
-                    return {"error": "Entry already exists."}
-                elif event.entry_set.filter(partner=entry_schema.participant, participant=entry_schema.partner).exists() \
-                        and (str(entry.participant.id) != entry_schema.partner or str(entry.partner.id) != entry_schema.participant):
-                    return {"error": "Entry already exists."}
-                elif event.type == "S" and entry_schema.partner:
+                if event.type == "S":
+                    if event.entry_set.exclude(id=entry_id).filter(participant=entry_schema.participant).exists():
+                        return {"error": "Entry already exists."}
+                else:
+                    if event.entry_set.exclude(id=entry_id).filter(participant=entry_schema.participant,
+                                              partner=entry_schema.partner).exists():
+                        return {"error": "Entry already exists."}
+                    if event.entry_set.exclude(id=entry_id).filter(partner=entry_schema.participant,
+                                                                   participant=entry_schema.partner).exists():
+                        return {"error": "Entry already exists."}
+                if event.type == "S" and entry_schema.partner:
                     return {"error": "Singles event cannot have a partner."}
                 elif event.type == "D" and not entry_schema.partner:
                     return {"error": "Doubles event must have a partner."}
                 elif event.type == "D" and entry_schema.participant == entry_schema.partner:
                     return {"error": "Doubles partners must be different."}
                 entry.participant = tournament.participants.get(id=entry_schema.participant)
-                entry.partner = tournament.participants.get(id=entry_schema.partner)
+                entry.partner = tournament.participants.get(id=entry_schema.partner) if entry_schema.partner else None
                 entry.seed = entry_schema.seed
                 entry.save()
                 return {"message": "Entry updated successfully!"}
@@ -478,24 +504,54 @@ def delete_entry(request, tournament_id: str, event_id: str, entry_id: str):
         return {"error": "Tournament not found."}
 
 
-@api.get("/tournament/{tournament_id}/events/{event_id}/draw", auth=JWTAuth())
-def event_draw(request, tournament_id: str, event_id: str):
+@api.get("/tournament/{tournament_id}/events/{event_id}/matches", auth=JWTAuth())
+def event_matches(request, tournament_id: str, event_id: str):
     try:
         tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
         try:
             event = tournament.event_set.get(id=event_id)
-            matches = event.match_set.exclude(round="A")
+            matches = event.match_set.all()
             if not matches:
                 return {"draw": False}
             draw = []
             for match in matches:
+                if match.actual_end_time:
+                    duration = match.actual_end_time - match.actual_start_time
+                    total_seconds = int(duration.total_seconds())
+                    duration_timedelta = timedelta(seconds=total_seconds)
+                    if total_seconds < 3600:
+                        duration_str = '{:02}:{:02}'.format(duration_timedelta.seconds // 60,
+                                                            duration_timedelta.seconds % 60)
+                    else:
+                        duration_str = '{:02}:{:02}:{:02}'.format(duration_timedelta.seconds // 3600,
+                                                                  (duration_timedelta.seconds // 60) % 60,
+                                                                  duration_timedelta.seconds % 60)
+                elif match.actual_start_time:
+                    duration_str = "In Progress" + match.actual_start_time.strftime("%H:%M:%S")
+                else:
+                    duration_str = ""
+
+                if match.team1 and not match.team2:
+                    team1 = str(match.team1)
+                    team2 = "Bye"
+                elif not match.team1 and match.team2:
+                    team1 = "Bye"
+                    team2 = str(match.team2)
+                else:
+                    team1 = str(match.team1)
+                    team2 = str(match.team2)
+
                 draw.append({
-                    "round": match.round,
-                    "match": match.match,
-                    "team1": match.team1,
-                    "team2": match.team2,
-                    "score": match.score.split(",") if match.score else "",
+                    "round": ROUND_CHOICES.get(match.round, match.round),
+                    "time": match.scheduled_start_time.strftime("%Y-%m-%d %H:%M") if match.scheduled_start_time else "",
+                    "match": match.match if match.match else "",
+                    "team1": team1,
+                    "team2": team2,
+                    "score": match.score if match.score else "",
+                    "duration": duration_str,
+                    "court": match.court.number if match.court else "",
                 })
+            return {"matches": draw}
         except ObjectDoesNotExist:
             return {"error": "Event not found."}
     except ObjectDoesNotExist:
@@ -513,39 +569,34 @@ def auto_draw(request, tournament_id: str, event_id: str):
             entries = event.entry_set.all()
             draw = []
             if event.arrangement == 'E':
-                seeds = [entry for entry in entries if entry.seed]
-                seeds.sort(key=lambda x: x.seed)
-                entries = [entry for entry in entries if not entry.seed]
-                for i in range(0, len(seeds), 2):
-                    entries.insert(i + 1, seeds[i])
-                
-                first_round = 2 ** math.ceil(math.log2(len(entries)))
-                if len(entries) % 2 != 0:
-                    entries.append(None)
+                # TODO: Rewrite auto draw
                 for i in range(0, len(entries), 2):
                     match = Match(event=event, round=first_round, match=i // 2 + 1, team1=entries[i],
                                   team2=entries[i + 1])
                     # match.save()
-                    draw.append({
-                        "round": match.round,
+
+                    if match.team1 and not match.team2:
+                        team1 = str(match.team1)
+                        team2 = "Bye"
+                    elif not match.team1 and match.team2:
+                        team1 = "Bye"
+                        team2 = str(match.team2)
+                    else:
+                        team1 = str(match.team1)
+                        team2 = str(match.team2)
+
+                    match_info = {
+                        "round": ROUND_CHOICES.get(str(match.round), str(match.round)),
+                        "time": "",
                         "match": match.match,
-                        "team1": match.team1,
-                        "team2": match.team2,
-                        "score": match.score.split(",") if match.score else "",
-                    })
-            elif event.arrangement == 'R':
-                for i in range(len(entries)):
-                    for j in range(i + 1, len(entries)):
-                        match = Match(event=event, round="R", match=1, team1=entries[i], team2=entries[j])
-                        # match.save()
-                        draw.append({
-                            "round": match.round,
-                            "match": match.match,
-                            "team1": match.team1,
-                            "team2": match.team2,
-                            "score": match.score.split(",") if match.score else "",
-                        })
-            # TODO: Pools
+                        "team1": team1,
+                        "team2": team2,
+                        "score": "",
+                        "duration": "",
+                        "court": "",
+                    }
+                    draw.append(match_info)
+            # TODO: Pools, Round Robin, Elimination Cons
             return {"draw": draw}
         except ObjectDoesNotExist:
             return {"error": "Event not found."}
