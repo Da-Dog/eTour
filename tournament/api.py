@@ -529,7 +529,7 @@ def event_matches(request, tournament_id: str, event_id: str):
                                                                   (duration_timedelta.seconds // 60) % 60,
                                                                   duration_timedelta.seconds % 60)
                 elif match.actual_start_time:
-                    duration_str = "In Progress" + match.actual_start_time.strftime("%H:%M:%S")
+                    duration_str = "In Progress " + match.actual_start_time.strftime("%H:%M:%S")
                 else:
                     duration_str = ""
 
@@ -771,7 +771,7 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
                 return {
                     "match": match.match,
                     "round": match.round,
-                    "scheduled_start_time": match.scheduled_start_time.strftime("%Y-%m-%d %H:%M") if match.scheduled_start_time else "",
+                    "scheduled_start_time": match.scheduled_start_time.strftime("%Y-%m-%dT%H:%M") if match.scheduled_start_time else "",
                     "team1": match.team1.id if match.team1 else "",
                     "team2": match.team2.id if match.team2 else "",
                     "score": match.score,
@@ -779,6 +779,32 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
                     "note": match.note,
                     "no_match": match.no_match,
                 }
+            except ObjectDoesNotExist:
+                return {"error": "Match not found."}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.put("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
+def update_match(request, tournament_id: str, event_id: str, match_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            try:
+                match = event.match_set.get(match=match_id)
+                # if match_schema.team1:
+                #     match.team1 = tournament.participants.get(id=match_schema.team1)
+                # if match_schema.team2:
+                #     match.team2 = tournament.participants.get(id=match_schema.team2)
+                # match.score = match_schema.score
+                # match.court = tournament.court_set.get(number=match_schema.court) if match_schema.court else None
+                # match.note = match_schema.note
+                # match.no_match = match_schema.no_match
+                match.save()
+                return {"message": "Match updated successfully!"}
             except ObjectDoesNotExist:
                 return {"error": "Match not found."}
         except ObjectDoesNotExist:

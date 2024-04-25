@@ -255,7 +255,7 @@ function EventDetail() {
                 score4: response.score4,
                 score5: response.score5,
                 score6: response.score6,
-                scheduled_time: response.scheduled_time,
+                scheduled_time: response.scheduled_start_time,
                 note: response.note ? response.note : '',
                 no_match: response.no_match,
             });
