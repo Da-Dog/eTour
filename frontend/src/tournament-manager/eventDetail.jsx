@@ -44,7 +44,7 @@ import {
     getEventBracket, getMatch,
     getMatches, manualDraw,
     updateEntry,
-    updateEvent
+    updateEvent, updateMatch
 } from "../api.jsx";
 
 function EventDetail() {
@@ -249,17 +249,36 @@ function EventDetail() {
                 court: response.court ? response.court : '',
                 team1: response.team1 ? response.team1 : '',
                 team2: response.team2 ? response.team2 : '',
-                score1: response.score1,
-                score2: response.score2,
-                score3: response.score3,
-                score4: response.score4,
-                score5: response.score5,
-                score6: response.score6,
+                score1: response.score1 ? response.score1 : '',
+                score2: response.score2 ? response.score2 : '',
+                score3: response.score3 ? response.score3 : '',
+                score4: response.score4 ? response.score4 : '',
+                score5: response.score5 ? response.score5 : '',
+                score6: response.score6 ? response.score6 : '',
                 scheduled_time: response.scheduled_start_time,
                 note: response.note ? response.note : '',
                 no_match: response.no_match,
             });
             onMatchOpen();
+        });
+    }
+
+    const handleUpdateMatch = () => {
+        updateMatch(id, event_id, match).then(response => {
+            if (response.error) {
+                alert(response.error);
+            } else {
+                setMatches(matches.map(matchElement => {
+                    if (matchElement.match === match.match) {
+                        return response
+                    }
+                    return matchElement;
+                }));
+                getEventBracket(id, event_id).then(response => {
+                    setBracketData(response.draw);
+                });
+                onMatchClose();
+            }
         });
     }
 
@@ -421,9 +440,10 @@ function EventDetail() {
                                 <Select
                                     name='team1'
                                     value={entriesSelect.find(option => option.value === match.team1)}
-                                    onChange={(option) => setMatch({...match, team1: option.value})}
+                                    onChange={(option) => setMatch({...match, team1: option ? option.value : null})}
                                     options={entriesSelect}
                                     isSearchable
+                                    isClearable
                                 />
                             </FormControl>
                             <FormControl>
@@ -431,9 +451,10 @@ function EventDetail() {
                                 <Select
                                     name='team2'
                                     value={entriesSelect.find(option => option.value === match.team2)}
-                                    onChange={(option) => setMatch({...match, team2: option.value})}
+                                    onChange={(option) => setMatch({...match, team2: option ? option.value : null})}
                                     options={entriesSelect}
                                     isSearchable
+                                    isClearable
                                 />
                             </FormControl>
                             <FormControl>
@@ -473,7 +494,7 @@ function EventDetail() {
                         <Button variant="ghost" mr={3} onClick={onMatchClose}>
                             Cancel
                         </Button>
-                        <Button colorScheme="blue">
+                        <Button colorScheme="blue" onClick={handleUpdateMatch}>
                             Save
                         </Button>
                     </ModalFooter>
@@ -677,12 +698,14 @@ function EventDetail() {
                                                     {match.team2}
                                                 </Box>
 
-                                                {match.score && (
-                                                    <Box>
+                                                {match.no_match ?
+                                                    <Box as="span" color="red.600" fontSize="sm">
+                                                        No Match
+                                                    </Box>
+                                                    : match.score && (
                                                         <Box as="span" color="gray.600" fontSize="sm">
                                                             {match.score.replaceAll(',', ', ')}
                                                         </Box>
-                                                    </Box>
                                                 )}
                                             </Box>
                                         </Box>

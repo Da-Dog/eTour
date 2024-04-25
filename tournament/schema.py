@@ -48,3 +48,18 @@ class EntrySchema(Schema):
     participant: str
     partner: Optional[str] = Field(None)
     seed: Optional[int] = Field(None)
+
+
+class MatchSchema(Schema):
+    court: Optional[int] = Field(None)
+    team1: Optional[int] = Field(None)
+    team2: Optional[int] = Field(None)
+    score1: Optional[int] = Field(None)
+    score2: Optional[int] = Field(None)
+    score3: Optional[int] = Field(None)
+    score4: Optional[int] = Field(None)
+    score5: Optional[int] = Field(None)
+    score6: Optional[int] = Field(None)
+    scheduled_start_time: Optional[str] = Field(None)
+    note: Optional[str] = Field(None)
+    no_match: Optional[bool] = Field(None)

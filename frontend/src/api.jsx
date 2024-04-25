@@ -616,3 +616,36 @@ export const manualDraw = async (tournamentId, eventId, drawSize) => {
         alert(error);
     }
 }
+
+export const updateMatch = async (tournamentId, eventId, match) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/match/${match.match}`, {
+            court: match.court ? match.court : null,
+            team1: match.team1 ? match.team1 : null,
+            team2: match.team2 ? match.team2 : null,
+            score1: match.score1 ? match.score1 : null,
+            score2: match.score2 ? match.score2 : null,
+            score3: match.score3 ? match.score3 : null,
+            score4: match.score4 ? match.score4 : null,
+            score5: match.score5 ? match.score5 : null,
+            score6: match.score6 ? match.score6 : null,
+            scheduled_start_time: match.scheduled_time ? match.scheduled_time : null,
+            note: match.note ? match.note : null,
+            no_match: match.no_match ? match.no_match : null,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to update match");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}

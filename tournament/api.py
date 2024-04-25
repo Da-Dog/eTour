@@ -5,11 +5,11 @@ from ninja_jwt.controller import NinjaJWTDefaultController
 from datetime import datetime, timedelta
 
 from .models import Tournament, Participant, Entry, Event, Match
-from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema
+from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema, MatchSchema
 
 import random, math
 
-from .utils import map_next_match
+from .utils import map_next_match, team_win
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
@@ -659,7 +659,7 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
 
                 for i in draw:
                     if i['team1'] == "Bye" or i['team2'] == "Bye":
-                        bye_match = Match.objects.get(event=event, match=i['match'])
+                        bye_match = Match.objects.get(event=event, match=i['match'], no_match=True)
                         next_match = Match.objects.get(event=event,
                                                        match=map_next_match(bye_match.match, int(bye_match.round), event))
                         next_match.team1 = bye_match.team1 if bye_match.team1 else bye_match.team2
@@ -752,6 +752,7 @@ def getEventBracket(request, tournament_id: str, event_id: str):
                     "team1": team1,
                     "team2": team2,
                     "score": match.score if match.score else "",
+                    "no_match": match.no_match,
                 })
             return {"draw": draw}
         except ObjectDoesNotExist:
@@ -788,23 +789,115 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
 
 
 @api.put("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
-def update_match(request, tournament_id: str, event_id: str, match_id: str):
+def update_match(request, tournament_id: str, event_id: str, match_id: str, match_schema: MatchSchema):
     try:
         tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
         try:
             event = tournament.event_set.get(id=event_id)
             try:
                 match = event.match_set.get(match=match_id)
-                # if match_schema.team1:
-                #     match.team1 = tournament.participants.get(id=match_schema.team1)
-                # if match_schema.team2:
-                #     match.team2 = tournament.participants.get(id=match_schema.team2)
-                # match.score = match_schema.score
-                # match.court = tournament.court_set.get(number=match_schema.court) if match_schema.court else None
-                # match.note = match_schema.note
-                # match.no_match = match_schema.no_match
+                match.scheduled_start_time = datetime.strptime(match_schema.scheduled_start_time,
+                                                               "%Y-%m-%dT%H:%M") if match_schema.scheduled_start_time else None
+                try:
+                    match.team1 = event.entry_set.get(
+                        id=match_schema.team1) if match_schema.team1 else None
+                    match.team2 = event.entry_set.get(
+                        id=match_schema.team2) if match_schema.team2 else None
+                except ObjectDoesNotExist:
+                    return {"error": "Participant not found."}
+                if match_schema.court:
+                    try:
+                        court = tournament.court_set.get(number=match_schema.court)
+                        if not court == match.court:
+                            if court.match_set.all().exists():
+                                return {"error": "Court is occupied."}
+                            match.actual_start_time = datetime.now()
+                            match.court = court
+                    except ObjectDoesNotExist:
+                        return {"error": "Court not found."}
+                else:
+                    if match.court:
+                        match.actual_end_time = datetime.now()
+                        match.court = None
+                if match_schema.score1:
+                    if match_schema.score2:
+                        if match_schema.score1 == match_schema.score2:
+                            return {"error": "Score1 and Score2 must be different."}
+                        match.score = str(match_schema.score1) + "-" + str(match_schema.score2)
+                        if match_schema.score3:
+                            if not match_schema.score4:
+                                return {"error": "Score4 is required."}
+                            if match_schema.score5 and not match_schema.score6:
+                                return {"error": "Score6 is required."}
+                            if match_schema.score3 == match_schema.score4:
+                                return {"error": "Score3 and Score4 must be different."}
+                            if match_schema.score5 and match_schema.score5 == match_schema.score6:
+                                return {"error": "Score5 and Score6 must be different."}
+                            if not match_schema.score5:
+                                match_schema.score5 = 0
+                                match_schema.score6 = 0
+                            if match_schema.score1 + match_schema.score3 + match_schema.score5 > match_schema.score2 + match_schema.score4 + match_schema.score6:
+                                team_win(1, event, match)
+                            else:
+                                team_win(2, event, match)
+                            match.score += "," + str(match_schema.score3) + "-" + str(match_schema.score4)
+                            if match_schema.score5:
+                                match.score += "," + str(match_schema.score5) + "-" + str(match_schema.score6)
+                        else:
+                            if match_schema.score1 > match_schema.score2:
+                                team_win(1, event, match)
+                            else:
+                                team_win(2, event, match)
+                    else:
+                        return {"error": "Score2 is required."}
+                else:
+                    match.score = ""
+                if match_schema.no_match:
+                    # Note: if there are multiple player missing in a role, manually set no_match to True and move on until a player is found
+                    if match_schema.score1 and match_schema.score1 != 0:
+                        team_win(1, event, match)
+                    elif match_schema.score2 and match_schema.score2 != 0:
+                        team_win(2, event, match)
+                    match.no_match = True
+                else:
+                    match.no_match = False
+                match.note = match_schema.note
                 match.save()
-                return {"message": "Match updated successfully!"}
+
+                if match.actual_end_time:
+                    duration = match.actual_end_time - match.actual_start_time
+                    total_seconds = int(duration.total_seconds())
+                    duration_timedelta = timedelta(seconds=total_seconds)
+                    if total_seconds < 3600:
+                        duration_str = '{:02}:{:02}'.format(duration_timedelta.seconds // 60,
+                                                            duration_timedelta.seconds % 60)
+                    else:
+                        duration_str = '{:02}:{:02}:{:02}'.format(duration_timedelta.seconds // 3600,
+                                                                  (duration_timedelta.seconds // 60) % 60,
+                                                                  duration_timedelta.seconds % 60)
+                elif match.actual_start_time:
+                    duration_str = "In Progress " + match.actual_start_time.strftime("%H:%M:%S")
+                else:
+                    duration_str = ""
+
+                if match.team1 and not match.team2 and match.score == "1-0":
+                    team1 = str(match.team1)
+                    team2 = "Bye"
+                    match.score = ""
+                else:
+                    team1 = str(match.team1) if match.team1 else ""
+                    team2 = str(match.team2) if match.team2 else ""
+
+                return {
+                    "round": ROUND_CHOICES.get(match.round, match.round),
+                    "time": match.scheduled_start_time.strftime("%Y-%m-%d %H:%M") if match.scheduled_start_time else "",
+                    "match": match.match if match.match else "",
+                    "team1": team1,
+                    "team2": team2,
+                    "score": match.score if match.score else "",
+                    "duration": duration_str,
+                    "court": match.court.number if match.court else "",
+                }
             except ObjectDoesNotExist:
                 return {"error": "Match not found."}
         except ObjectDoesNotExist:
