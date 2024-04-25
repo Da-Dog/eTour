@@ -1,7 +1,7 @@
 import {
     Box,
     Button,
-    Checkbox,
+    Checkbox, Divider,
     Flex,
     FormControl,
     FormHelperText,
@@ -35,7 +35,17 @@ import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
 import {FaHammer, FaPlus, FaRandom} from "react-icons/fa";
 import {useEffect, useState} from "react";
-import {addEntry, autoDraw, deleteEntry, deleteEvent, getEvent, getMatches, updateEntry, updateEvent} from "../api.jsx";
+import {
+    addEntry,
+    autoDraw,
+    deleteEntry,
+    deleteEvent,
+    getEvent,
+    getEventBracket, getMatch,
+    getMatches, manualDraw,
+    updateEntry,
+    updateEvent
+} from "../api.jsx";
 
 function EventDetail() {
     const {id, event_id} = useParams();
@@ -87,6 +97,8 @@ function EventDetail() {
     const [entriesSelect, setEntriesSelect] = useState([]);
 
     const navigate = useNavigate();
+
+    const [bracketData, setBracketData] = useState([]);
 
     const handleInputChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -191,7 +203,63 @@ function EventDetail() {
                 alert(response.error);
             } else {
                 setMatches(response.draw);
+                getEventBracket(id, event_id).then(response => {
+                    setBracketData(response.draw);
+                });
             }
+        });
+    }
+
+    const handleManualDraw = () => {
+        manualDraw(id, event_id, drawSize).then(response => {
+            if (response.error) {
+                alert(response.error);
+            } else {
+                setMatches(response.draw);
+                getEventBracket(id, event_id).then(response => {
+                    setBracketData(response.draw);
+                });
+            }
+        });
+    }
+
+    const handleOpenMatch = (match) => {
+        getMatch(id, event_id, match).then(response => {
+            if (response.score) {
+                response.score1 = response.score.split(',')[0].split('-')[0];
+                response.score2 = response.score.split(',')[0].split('-')[1];
+                if (response.score.split(',').length > 1) {
+                    response.score3 = response.score.split(',')[1].split('-')[0];
+                    response.score4 = response.score.split(',')[1].split('-')[1];
+                } else {
+                    response.score3 = '';
+                    response.score4 = '';
+                }
+                if (response.score.split(',').length > 2) {
+                    response.score5 = response.score.split(',')[2].split('-')[0];
+                    response.score6 = response.score.split(',')[2].split('-')[1];
+                } else {
+                    response.score5 = '';
+                    response.score6 = '';
+                }
+            }
+            setMatch({
+                match: response.match ? response.match : '',
+                round: response.round ? response.round : 'A',
+                court: response.court ? response.court : '',
+                team1: response.team1 ? response.team1 : '',
+                team2: response.team2 ? response.team2 : '',
+                score1: response.score1,
+                score2: response.score2,
+                score3: response.score3,
+                score4: response.score4,
+                score5: response.score5,
+                score6: response.score6,
+                scheduled_time: response.scheduled_time,
+                note: response.note ? response.note : '',
+                no_match: response.no_match,
+            });
+            onMatchOpen();
         });
     }
 
@@ -232,17 +300,18 @@ function EventDetail() {
         getMatches(id, event_id).then(response => {
             setMatches(response.matches);
         });
+        getEventBracket(id, event_id).then(response => {
+            setBracketData(response.draw);
+        });
     }, [event_id, id]);
 
     useEffect(() => {
-        if (isMatchOpen) {
-            setEntriesSelect(entries.map(entry => {
-                return {
-                    value: entry.entry_id,
-                    label: entry.player + (entry.partner ? ' / ' + entry.partner : '')
-                }
-            }));
-        }
+        setEntriesSelect(entries.map(entry => {
+            return {
+                value: entry.entry_id,
+                label: players.find(player => player.value === entry.player).label + (entry.partner ? ' / ' + players.find(player => player.value === entry.partner).label : '')
+            }
+        }));
     }, [isMatchOpen, entries]);
 
     return (
@@ -325,7 +394,7 @@ function EventDetail() {
                         <VStack spacing={3}>
                             <FormControl>
                                 <FormLabel>Match</FormLabel>
-                                <Input type='number' name='match' value={match.match} onChange={handleMatchInputChange}/>
+                                <Input type='number' name='match' value={match.match} isDisabled/>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Round</FormLabel>
@@ -431,7 +500,7 @@ function EventDetail() {
                             <option value="256">256</option>
                             <option value="512">512</option>
                         </ChakraSelect>
-                        <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6}>
+                        <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6} onClick={handleManualDraw}>
                             Manual Draw
                         </Button>
                         <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={2} pl={6} pr={6} onClick={handleAutoDraw}>
@@ -573,9 +642,55 @@ function EventDetail() {
                         </Table>
                     </TabPanel>
                     <TabPanel>
-                        <VStack spacing={8}>
+                        <Flex flexDirection="row" h="100%" mt={5} justify='space-around'>
+                        {bracketData.map((round, index) => (
+                            <Box key={index} ml={5} mr={75}>
+                                <Flex justifyContent="center" alignItems="center" mb={5}>
+                                    <Text as='b'>{round.round}</Text>
+                                </Flex>
+                                <VStack align='stretch' justify='space-around' spacing={5} h="100%" key={index}>
+                                    {round.matches.map((match, index) => (
+                                        <Box key={index} borderWidth="3px" borderRadius="lg" mb={3} _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.id)}>
+                                            <Box p="6">
+                                                <Box d="flex" alignItems="baseline">
+                                                    <Box
+                                                        color="gray.500"
+                                                        fontWeight="semibold"
+                                                        letterSpacing="wide"
+                                                        fontSize="xs"
+                                                        textTransform="uppercase"
+                                                        ml="2"
+                                                    >
+                                                        Match ID: {match.id}
+                                                    </Box>
+                                                </Box>
 
-                        </VStack>
+                                                <Box
+                                                    mt="1"
+                                                    fontWeight="semibold"
+                                                    as="h4"
+                                                    lineHeight="tight"
+                                                    isTruncated
+                                                >
+                                                    {match.team1}
+                                                    <Divider mt={1} mb={1} />
+                                                    {match.team2}
+                                                </Box>
+
+                                                {match.score && (
+                                                    <Box>
+                                                        <Box as="span" color="gray.600" fontSize="sm">
+                                                            {match.score.replaceAll(',', ', ')}
+                                                        </Box>
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </VStack>
+                            </Box>
+                        ))}
+                        </Flex>
                     </TabPanel>
                     <TabPanel>
                         <Table variant="simple">
@@ -593,13 +708,13 @@ function EventDetail() {
                             </Thead>
                             <Tbody>
                                 {matches ? matches.map((match, index) => (
-                                    <Tr key={index}>
+                                    <Tr key={index}  _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.match)}>
                                         <Th>{match.match}</Th>
                                         <Td>{match.time}</Td>
                                         <Td>{match.team1}</Td>
                                         <Td>{match.team2}</Td>
                                         <Td>{match.round}</Td>
-                                        <Td>{match.score}</Td>
+                                        <Td>{match.score.replaceAll(',', ', ')}</Td>
                                         <Td>{match.duration}</Td>
                                         <Td>{match.court}</Td>
                                     </Tr>

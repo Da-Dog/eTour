@@ -512,7 +512,7 @@ def event_matches(request, tournament_id: str, event_id: str):
         tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
         try:
             event = tournament.event_set.get(id=event_id)
-            matches = event.match_set.all()
+            matches = event.match_set.all().order_by('match')
             if not matches:
                 return {"draw": False}
             draw = []
@@ -670,6 +670,117 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
                                 break
             # TODO: Pools, Round Robin, Elimination Cons
             return {"draw": draw}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/manual_draw", auth=JWTAuth())
+def manual_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            if event.match_set.exclude(round="A").exists():
+                return {"error": "Draw already exists."}
+            draw = []
+            if event.arrangement == 'E':
+                if draw_size == 0:
+                    return {"error": "Draw size is required for elimination events."}
+                if draw_size < 2:
+                    return {"error": "Draw size must be at least 2."}
+                if draw_size & (draw_size - 1) != 0:
+                    return {"error": "Draw size must be a power of 2."}
+
+                match_number = Match.objects.filter(event__tournament=tournament).count() + 1
+                while draw_size > 1:
+                    for i in range(0, draw_size, 2):
+                        match = Match(event=event, round=draw_size, match=match_number)
+                        match.save()
+                        match_number += 1
+
+                        match_info = {
+                            "round": ROUND_CHOICES.get(str(match.round), str(match.round)),
+                            "time": "",
+                            "match": match.match,
+                            "team1": "",
+                            "team2": "",
+                            "score": "",
+                            "duration": "",
+                            "court": "",
+                        }
+                        draw.append(match_info)
+                    draw_size = draw_size // 2
+            return {"draw": draw}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/bracket", auth=JWTAuth())
+def getEventBracket(request, tournament_id: str, event_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            matches = event.match_set.exclude(round="A").order_by('match')
+
+            draw = []
+            current_round = ''
+            for match in matches:
+                if match.round != current_round:
+                    current_round = match.round
+                    draw.append({
+                        "round": ROUND_CHOICES.get(match.round, match.round),
+                        "matches": []
+                    })
+                if match.team1 and not match.team2 and match.score == "1-0":
+                    team1 = str(match.team1)
+                    team2 = "Bye"
+                    match.score = ""
+                elif not match.team1 and match.team2 and match.score == "0-1":
+                    team1 = "Bye"
+                    team2 = str(match.team2)
+                    match.score = ""
+                else:
+                    team1 = str(match.team1) if match.team1 else ""
+                    team2 = str(match.team2) if match.team2 else ""
+                draw[-1]['matches'].append({
+                    "id": match.match,
+                    "team1": team1,
+                    "team2": team2,
+                    "score": match.score if match.score else "",
+                })
+            return {"draw": draw}
+        except ObjectDoesNotExist:
+            return {"error": "Event not found."}
+    except ObjectDoesNotExist:
+        return {"error": "Tournament not found."}
+
+
+@api.get("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
+def match_detail(request, tournament_id: str, event_id: str, match_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id, owner=request.user)
+        try:
+            event = tournament.event_set.get(id=event_id)
+            try:
+                match = event.match_set.get(match=match_id)
+                return {
+                    "match": match.match,
+                    "round": match.round,
+                    "scheduled_start_time": match.scheduled_start_time.strftime("%Y-%m-%d %H:%M") if match.scheduled_start_time else "",
+                    "team1": match.team1.id if match.team1 else "",
+                    "team2": match.team2.id if match.team2 else "",
+                    "score": match.score,
+                    "court": match.court.number if match.court else "",
+                    "note": match.note,
+                    "no_match": match.no_match,
+                }
+            except ObjectDoesNotExist:
+                return {"error": "Match not found."}
         except ObjectDoesNotExist:
             return {"error": "Event not found."}
     except ObjectDoesNotExist:

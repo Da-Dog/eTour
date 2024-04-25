@@ -555,3 +555,64 @@ export const getMatches = async (tournamentId, eventId) => {
         alert(error);
     }
 }
+
+export const getEventBracket = async (tournamentId, eventId) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/bracket`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch bracket");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const getMatch = async (tournamentId, eventId, match) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/match/${match}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to fetch match");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+export const manualDraw = async (tournamentId, eventId, drawSize) => {
+    let token = Cookies.get('token');
+    try {
+        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/manual_draw`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            params: {draw_size: drawSize}
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to create empty draw");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
