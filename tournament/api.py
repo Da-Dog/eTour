@@ -557,6 +557,7 @@ def event_matches(request, tournament_id: str, event_id: str):
         return {"error": "Tournament not found."}
 
 
+# create playoff match if true
 @api.get("/tournament/{tournament_id}/events/{event_id}/auto_draw", auth=JWTAuth())
 def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
     try:
@@ -671,6 +672,7 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
         return {"error": "Tournament not found."}
 
 
+# create playoff match if true
 @api.get("/tournament/{tournament_id}/events/{event_id}/manual_draw", auth=JWTAuth())
 def manual_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
     try:
@@ -778,7 +780,7 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
         return {"error": "Tournament not found."}
 
 
-# FIX: some logic problem here like team winning not aligning next round
+# FIX: some logic problem here like team winning not aligning next round / no match if no opponent put to next match
 @api.put("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
 def update_match(request, tournament_id: str, event_id: str, match_id: str, match_schema: MatchSchema):
     try:

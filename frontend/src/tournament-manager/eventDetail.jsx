@@ -33,7 +33,7 @@ import {
 } from "@chakra-ui/react";
 import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
-import {FaHammer, FaPlus, FaRandom} from "react-icons/fa";
+import {FaHammer, FaPlus, FaPrint, FaRandom} from "react-icons/fa";
 import {useEffect, useState} from "react";
 import {
     addEntry,
@@ -89,9 +89,9 @@ function EventDetail() {
 
     const [tabIndex, setTabIndex] = useState(0);
     const [drawSize, setDrawSize] = useState(2);
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const { isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose } = useDisclosure();
-    const { isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const {isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose} = useDisclosure();
+    const {isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose} = useDisclosure();
 
     const [players, setPlayers] = useState([]);
     const [entriesSelect, setEntriesSelect] = useState([]);
@@ -127,7 +127,7 @@ function EventDetail() {
             if ("error" in response) {
                 alert(response.error);
             } else {
-               alert('Saved');
+                alert('Saved');
             }
         });
     }
@@ -336,14 +336,15 @@ function EventDetail() {
     return (
         <Box p={5}>
             <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Confirm Delete</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         Are you sure you want to delete this event?
                         <br/><br/>
-                        Events with entries can not be deleted, if you want to delete this event, please delete all entries first.
+                        Events with entries can not be deleted, if you want to delete this event, please delete all
+                        entries first.
                     </ModalBody>
 
                     <ModalFooter>
@@ -358,10 +359,10 @@ function EventDetail() {
             </Modal>
 
             <Modal isOpen={isEntryOpen} onClose={onEntryClose} size='lg'>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
-                    <ModalHeader>Entry - {entry.entry_id === 0 ?  "New" : entry.entry_id}</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalHeader>Entry - {entry.entry_id === 0 ? "New" : entry.entry_id}</ModalHeader>
+                    <ModalCloseButton/>
                     <ModalBody>
                         <VStack spacing={3}>
                             <FormControl>
@@ -385,10 +386,11 @@ function EventDetail() {
                                         isSearchable
                                     />
                                 </FormControl>
-                            ): <></>}
+                            ) : <></>}
                             <FormControl>
                                 <FormLabel>Seeding</FormLabel>
-                                <Input type='number' name='seed' value={entry.seed} onChange={(e) => setEntry({...entry, seed: e.target.value})}/>
+                                <Input type='number' name='seed' value={entry.seed}
+                                       onChange={(e) => setEntry({...entry, seed: e.target.value})}/>
                             </FormControl>
                         </VStack>
                     </ModalBody>
@@ -405,10 +407,10 @@ function EventDetail() {
             </Modal>
 
             <Modal isOpen={isMatchOpen} onClose={onMatchClose} size='lg'>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Match - {match.match ? match.match : "New"}</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         <VStack spacing={3}>
                             <FormControl>
@@ -433,7 +435,8 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Court</FormLabel>
-                                <Input type='number' name='court' value={match.court} onChange={handleMatchInputChange}/>
+                                <Input type='number' name='court' value={match.court}
+                                       onChange={handleMatchInputChange}/>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Team 1</FormLabel>
@@ -460,16 +463,22 @@ function EventDetail() {
                             <FormControl>
                                 <FormLabel>Score</FormLabel>
                                 <Flex>
-                                    <Input type='number' name='score1' value={match.score1} onChange={handleMatchInputChange} width="20%" mr={1}/>
+                                    <Input type='number' name='score1' value={match.score1}
+                                           onChange={handleMatchInputChange} width="20%" mr={1}/>
                                     <Text mt={1}>-</Text>
-                                    <Input type='number' name='score2' value={match.score2} onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
+                                    <Input type='number' name='score2' value={match.score2}
+                                           onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
                                     {event.scoring_format === 'S' ? <>
-                                        <Input type='number' name='score3' value={match.score3} onChange={handleMatchInputChange} width="20%" mr={1}/>
+                                        <Input type='number' name='score3' value={match.score3}
+                                               onChange={handleMatchInputChange} width="20%" mr={1}/>
                                         <Text mt={1}>-</Text>
-                                        <Input type='number' name='score4' value={match.score4} onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
-                                        <Input type='number' name='score5' value={match.score5} onChange={handleMatchInputChange} width="20%" mr={1}/>
+                                        <Input type='number' name='score4' value={match.score4}
+                                               onChange={handleMatchInputChange} width="20%" ml={1} mr={3}/>
+                                        <Input type='number' name='score5' value={match.score5}
+                                               onChange={handleMatchInputChange} width="20%" mr={1}/>
                                         <Text mt={1}>-</Text>
-                                        <Input type='number' name='score6' value={match.score6} onChange={handleMatchInputChange} width="20%" ml={1}/>
+                                        <Input type='number' name='score6' value={match.score6}
+                                               onChange={handleMatchInputChange} width="20%" ml={1}/>
                                     </> : <></>
                                     }
                                 </Flex>
@@ -477,7 +486,8 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Scheduled Time</FormLabel>
-                                <Input type='datetime-local' name='scheduled_time' value={match.scheduled_time} onChange={handleMatchInputChange}/>
+                                <Input type='datetime-local' name='scheduled_time' value={match.scheduled_time}
+                                       onChange={handleMatchInputChange}/>
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Note</FormLabel>
@@ -502,7 +512,7 @@ function EventDetail() {
             </Modal>
 
             <Flex justifyContent="space-between" alignItems="center" mb={4} p={5}>
-                <Heading ml={6} mt={2}  w={'75%'} isTruncated>Event Detail - {event.name}</Heading>
+                <Heading ml={6} mt={2} w={'75%'} isTruncated>Event Detail - {event.name}</Heading>
                 {tabIndex === 1 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={handleEntryCreateOpen}>
                         Add Entry
@@ -510,24 +520,27 @@ function EventDetail() {
                 }
                 {tabIndex === 2 && !matches ?
                     <>
-                        <b>Size:</b><ChakraSelect name='drawSize' value={drawSize} onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%' ml={1}>
-                            <option value="2">2</option>
-                            <option value="4">4</option>
-                            <option value="8">8</option>
-                            <option value="16">16</option>
-                            <option value="32">32</option>
-                            <option value="64">64</option>
-                            <option value="128">128</option>
-                            <option value="256">256</option>
-                            <option value="512">512</option>
-                        </ChakraSelect>
-                        <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6} onClick={handleManualDraw}>
+                        <b>Size:</b><ChakraSelect name='drawSize' value={drawSize}
+                                                  onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%'
+                                                  ml={1}>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                        <option value="32">32</option>
+                        <option value="64">64</option>
+                        <option value="128">128</option>
+                        <option value="256">256</option>
+                        <option value="512">512</option>
+                    </ChakraSelect>
+                        <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6}
+                                onClick={handleManualDraw}>
                             Manual Draw
                         </Button>
                         <Button colorScheme="teal" leftIcon={<FaRandom/>} ml={2} pl={6} pr={6} onClick={handleAutoDraw}>
                             Auto Draw
                         </Button>
-                    </>: <></>
+                    </> : <></>
                 }
                 {tabIndex === 3 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onMatchOpen}>
@@ -570,7 +583,8 @@ function EventDetail() {
                             </FormControl>
                             <FormControl>
                                 <FormLabel>Scoring Format</FormLabel>
-                                <ChakraSelect name='scoring_format' value={event.scoring_format} onChange={handleInputChange}>
+                                <ChakraSelect name='scoring_format' value={event.scoring_format}
+                                              onChange={handleInputChange}>
                                     <option value="S">Standard</option>
                                     <option value="O">One Set</option>
                                 </ChakraSelect>
@@ -601,7 +615,7 @@ function EventDetail() {
                                 <FormControl>
                                     <FormLabel>Full Feed Last Round</FormLabel>
                                     <ChakraSelect name='full_feed_last_round' value={event.full_feed_last_round}
-                                            onChange={handleInputChange}>
+                                                  onChange={handleInputChange}>
                                         <option value="F">Final</option>
                                         <option value="S">Semi</option>
                                         <option value="Q">Quarter</option>
@@ -645,15 +659,19 @@ function EventDetail() {
                                     <Tr key={entry.entry_id}>
                                         <Th>{index + 1}</Th>
                                         <Td>
-                                            <Text textTransform='capitalize'>{players.find((element) => element.value === entry.player)?.label}</Text>
-                                            <Text textTransform='capitalize'>{entry.partner ? players.find((element) => element.value === entry.partner)?.label : ''}</Text>
+                                            <Text
+                                                textTransform='capitalize'>{players.find((element) => element.value === entry.player)?.label}</Text>
+                                            <Text
+                                                textTransform='capitalize'>{entry.partner ? players.find((element) => element.value === entry.partner)?.label : ''}</Text>
                                         </Td>
                                         <Td>{entry.seed}</Td>
                                         <Td>
-                                            <Button size='sm' colorScheme='red' onDoubleClick={() => handleEntryDelete(entry.entry_id)}>
+                                            <Button size='sm' colorScheme='red'
+                                                    onDoubleClick={() => handleEntryDelete(entry.entry_id)}>
                                                 Delete
                                             </Button>
-                                            <Button size='sm' colorScheme='blue' ml={2} onClick={() => handleEntryEdit(entry)}>
+                                            <Button size='sm' colorScheme='blue' ml={2}
+                                                    onClick={() => handleEntryEdit(entry)}>
                                                 Edit
                                             </Button>
                                         </Td>
@@ -663,56 +681,58 @@ function EventDetail() {
                         </Table>
                     </TabPanel>
                     <TabPanel>
-                        <Flex flexDirection="row" h="100%" mt={5} justify='space-around'>
-                        {bracketData.map((round, index) => (
-                            <Box key={index} ml={5} mr={75}>
-                                <Flex justifyContent="center" alignItems="center" mb={5}>
-                                    <Text as='b'>{round.round}</Text>
-                                </Flex>
-                                <VStack align='stretch' justify='space-around' spacing={5} h="100%" key={index}>
-                                    {round.matches.map((match, index) => (
-                                        <Box key={index} borderWidth="3px" borderRadius="lg" mb={3} _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.id)} h='150px'>
-                                            <Box p="6">
-                                                <Box d="flex" alignItems="baseline">
+                        <Flex flexDirection="row" h="100%" mt={5} justify='space-around' id="bracketSection">
+                            {bracketData.map((round, index) => (
+                                <Box key={index} ml={5} mr={75}>
+                                    <Flex justifyContent="center" alignItems="center" mb={5}>
+                                        <Text as='b'>{round.round}</Text>
+                                    </Flex>
+                                    <VStack align='stretch' justify='space-around' spacing={5} h="100%" key={index}>
+                                        {round.matches.map((match, index) => (
+                                            <Box key={index} borderWidth="3px" borderRadius="lg" mb={3}
+                                                 _hover={{backgroundColor: 'gray.200'}} style={{cursor: "pointer"}}
+                                                 onClick={() => handleOpenMatch(match.id)} h='150px'>
+                                                <Box p="6">
+                                                    <Box d="flex" alignItems="baseline">
+                                                        <Box
+                                                            color="gray.500"
+                                                            fontWeight="semibold"
+                                                            letterSpacing="wide"
+                                                            fontSize="xs"
+                                                            textTransform="uppercase"
+                                                            ml="2"
+                                                        >
+                                                            Match ID: {match.id}
+                                                        </Box>
+                                                    </Box>
+
                                                     <Box
-                                                        color="gray.500"
+                                                        mt="1"
                                                         fontWeight="semibold"
-                                                        letterSpacing="wide"
-                                                        fontSize="xs"
-                                                        textTransform="uppercase"
-                                                        ml="2"
+                                                        as="h4"
+                                                        lineHeight="tight"
+                                                        isTruncated
                                                     >
-                                                        Match ID: {match.id}
+                                                        {match.team1 ? match.team1 : <br/>}
+                                                        <Divider mt={1} mb={1}/>
+                                                        {match.team2 ? match.team2 : <br/>}
                                                     </Box>
-                                                </Box>
 
-                                                <Box
-                                                    mt="1"
-                                                    fontWeight="semibold"
-                                                    as="h4"
-                                                    lineHeight="tight"
-                                                    isTruncated
-                                                >
-                                                    {match.team1 ? match.team1 : <br/>}
-                                                    <Divider mt={1} mb={1} />
-                                                    {match.team2 ? match.team2 : <br/>}
-                                                </Box>
-
-                                                {match.no_match ?
-                                                    <Box as="span" color="red.600" fontSize="sm">
-                                                        No Match
-                                                    </Box>
-                                                    : match.score && (
+                                                    {match.no_match ?
+                                                        <Box as="span" color="red.600" fontSize="sm">
+                                                            No Match
+                                                        </Box>
+                                                        : match.score && (
                                                         <Box as="span" color="gray.600" fontSize="sm">
                                                             {match.score.replaceAll(',', ', ')}
                                                         </Box>
-                                                )}
+                                                    )}
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                    ))}
-                                </VStack>
-                            </Box>
-                        ))}
+                                        ))}
+                                    </VStack>
+                                </Box>
+                            ))}
                         </Flex>
                     </TabPanel>
                     <TabPanel>
@@ -731,7 +751,8 @@ function EventDetail() {
                             </Thead>
                             <Tbody>
                                 {matches ? matches.map((match, index) => (
-                                    <Tr key={index}  _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.match)}>
+                                    <Tr key={index} _hover={{backgroundColor: 'gray.200'}} style={{cursor: "pointer"}}
+                                        onClick={() => handleOpenMatch(match.match)}>
                                         <Th>{match.match}</Th>
                                         <Td>{match.time}</Td>
                                         <Td>{match.team1}</Td>
