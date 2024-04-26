@@ -533,14 +533,9 @@ def event_matches(request, tournament_id: str, event_id: str):
                 else:
                     duration_str = ""
 
-                if match.team1 and not match.team2 and match.score == "1-0":
-                    team1 = str(match.team1)
-                    team2 = "Bye"
-                    match.score = ""
-                elif not match.team1 and match.team2 and match.score == "0-1":
-                    team1 = "Bye"
-                    team2 = str(match.team2)
-                    match.score = ""
+                if match.no_match:
+                    team1 = str(match.team1) if match.team1 else "Bye"
+                    team2 = str(match.team2) if match.team2 else "Bye"
                 else:
                     team1 = str(match.team1) if match.team1 else ""
                     team2 = str(match.team2) if match.team2 else ""
@@ -736,14 +731,9 @@ def getEventBracket(request, tournament_id: str, event_id: str):
                         "round": ROUND_CHOICES.get(match.round, match.round),
                         "matches": []
                     })
-                if match.team1 and not match.team2 and match.score == "1-0":
-                    team1 = str(match.team1)
-                    team2 = "Bye"
-                    match.score = ""
-                elif not match.team1 and match.team2 and match.score == "0-1":
-                    team1 = "Bye"
-                    team2 = str(match.team2)
-                    match.score = ""
+                if match.no_match:
+                    team1 = str(match.team1) if match.team1 else "Bye"
+                    team2 = str(match.team2) if match.team2 else "Bye"
                 else:
                     team1 = str(match.team1) if match.team1 else ""
                     team2 = str(match.team2) if match.team2 else ""
@@ -788,6 +778,7 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
         return {"error": "Tournament not found."}
 
 
+# FIX: some logic problem here like team winning not aligning next round
 @api.put("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
 def update_match(request, tournament_id: str, event_id: str, match_id: str, match_schema: MatchSchema):
     try:
@@ -880,13 +871,9 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
                 else:
                     duration_str = ""
 
-                if match.team1 and not match.team2 and match.score == "1-0":
-                    team1 = str(match.team1)
-                    team2 = "Bye"
-                    match.score = ""
-                else:
-                    team1 = str(match.team1) if match.team1 else ""
-                    team2 = str(match.team2) if match.team2 else ""
+                if match.no_match:
+                    team1 = str(match.team1) if match.team1 else "Bye"
+                    team2 = str(match.team2) if match.team2 else "Bye"
 
                 return {
                     "round": ROUND_CHOICES.get(match.round, match.round),

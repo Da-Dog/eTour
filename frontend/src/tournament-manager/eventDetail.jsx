@@ -671,7 +671,7 @@ function EventDetail() {
                                 </Flex>
                                 <VStack align='stretch' justify='space-around' spacing={5} h="100%" key={index}>
                                     {round.matches.map((match, index) => (
-                                        <Box key={index} borderWidth="3px" borderRadius="lg" mb={3} _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.id)}>
+                                        <Box key={index} borderWidth="3px" borderRadius="lg" mb={3} _hover={{ backgroundColor: 'gray.200' }} style={{cursor: "pointer"}} onClick={() => handleOpenMatch(match.id)} h='150px'>
                                             <Box p="6">
                                                 <Box d="flex" alignItems="baseline">
                                                     <Box
@@ -693,9 +693,9 @@ function EventDetail() {
                                                     lineHeight="tight"
                                                     isTruncated
                                                 >
-                                                    {match.team1}
+                                                    {match.team1 ? match.team1 : <br/>}
                                                     <Divider mt={1} mb={1} />
-                                                    {match.team2}
+                                                    {match.team2 ? match.team2 : <br/>}
                                                 </Box>
 
                                                 {match.no_match ?
