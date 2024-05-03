@@ -93,8 +93,8 @@ def retrieve_participant(tournament, participant_id):
     return get_object_or_error(Participant, tournament=tournament, id=participant_id)
 
 
-def retrieve_match(tournament, event, match_id):
-    return get_object_or_error(Match, tournament=tournament, event=event, id=match_id)
+def retrieve_match(event, match_id):
+    return get_object_or_error(Match, event=event, match=match_id)
 
 
 def format_match_return(match):
@@ -110,3 +110,37 @@ def format_match_return(match):
         "duration": duration_str,
         "court": match.court.number if match.court else "",
     }
+
+
+def fill_teams_elimination(teams, seeds, non_seeds):
+    index, reversed_index = 0, len(teams) - 1
+    top = True
+    for seed in seeds:
+        if top:
+            teams[index] = seed
+            teams[index + 1:index + 2] = non_seeds[:1]
+            non_seeds = non_seeds[1:]
+            index += 2
+        else:
+            teams[reversed_index] = seed
+            teams[reversed_index - 1:reversed_index] = non_seeds[:1]
+            non_seeds = non_seeds[1:]
+            reversed_index -= 2
+        top = not top
+
+    for i in range(len(teams)):
+        if not teams[i]:
+            teams[i] = non_seeds.pop(0) if non_seeds else None
+
+
+def create_matches_elimination(teams, event, draw):
+    match_number = Match.objects.filter(event__tournament=event.tournament).count() + 1
+    draw_size = len(teams)
+    while draw_size > 1:
+        for i in range(0, draw_size, 2):
+            match = Match(event=event, round=draw_size, match=match_number,
+                          team1=teams[i], team2=teams[i + 1])
+            match.save()
+            draw.append({"match": match_number, "team1": str(teams[i]), "team2": str(teams[i + 1])})
+            match_number += 1
+        draw_size //= 2

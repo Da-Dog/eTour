@@ -6,14 +6,13 @@ from datetime import datetime
 
 from .models import Participant, Tournament, Entry, Event, Match
 from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema, MatchSchema
-from .utils import map_next_match, get_team_time, retrieve_event, retrieve_entry, retrieve_tournament,\
-    retrieve_participant, retrieve_match, format_match_return
+from .utils import map_next_match, get_team_time, retrieve_event, retrieve_entry, retrieve_tournament, \
+    retrieve_participant, retrieve_match, format_match_return, create_matches_elimination, fill_teams_elimination
 
 import random
 
 api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
-
 
 ROUND_CHOICES = {
     "2": "Final",
@@ -105,7 +104,7 @@ def tournament_update(request, tournament_id: str, tournament_schema: Tournament
     return {"message": "Tournament updated successfully!"}
 
 
-@api.delete("/tournament/{tournament_id}",   auth=JWTAuth())
+@api.delete("/tournament/{tournament_id}", auth=JWTAuth())
 def tournament_delete(request, tournament_id: str):
     tournament, error = retrieve_tournament(tournament_id, request.user)
     if error:
@@ -472,7 +471,6 @@ def event_matches(request, tournament_id: str, event_id: str):
     return {"matches": draw}
 
 
-# create playoff match if true
 @api.get("/tournament/{tournament_id}/events/{event_id}/auto_draw", auth=JWTAuth())
 def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
     tournament, error = retrieve_tournament(tournament_id, request.user)
@@ -483,8 +481,10 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
         return error
     if event.match_set.exclude(round="A").exists():
         return {"error": "Draw already exists."}
-    entries = event.entry_set.all()
+
+    entries = list(event.entry_set.all())
     draw = []
+    # TODO: Pools, Round Robin, Elimination Cons
     if event.arrangement == 'E':
         if draw_size == 0:
             return {"error": "Draw size is required for elimination events."}
@@ -492,80 +492,24 @@ def auto_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
             return {"error": "Draw size must be at least 2."}
         if draw_size & (draw_size - 1) != 0:
             return {"error": "Draw size must be a power of 2."}
+
         teams = [None] * draw_size
-        seeds = [entry for entry in entries if entry.seed]
-        seeds.sort(key=lambda x: x.seed)
-        entries = [entry for entry in entries if not entry.seed]
-        random.shuffle(entries)
+        seeds = sorted((e for e in entries if e.seed), key=lambda x: x.seed)
+        non_seeds = [e for e in entries if not e.seed]
+        random.shuffle(non_seeds)
 
-        index = 0
-        reversed_index = len(teams) - 1
-        top = True
-        for seed in seeds:
-            if top:
-                teams[index] = seed
-                if entries:
-                    teams[index + 1] = entries.pop(0)
-                index += 2
-                top = False
-            else:
-                teams[reversed_index] = seed
-                if entries:
-                    teams[reversed_index - 1] = entries.pop(0)
-                reversed_index -= 2
-                top = True
-        reversed_index = len(teams) - 1
-        for i in range(len(teams)):
-            if not teams[i]:
-                if entries:
-                    teams[i] = entries.pop(0)
-            if not teams[reversed_index]:
-                if entries:
-                    teams[reversed_index] = entries.pop(0)
-            reversed_index -= 1
+        fill_teams_elimination(teams, seeds, non_seeds)
+        create_matches_elimination(teams, event, draw)
 
-        match_number = Match.objects.filter(event__tournament=tournament).count() + 1
-
-        for i in range(0, len(teams), 2):
-            if teams[i] and not teams[i + 1]:
-                score = "1-0"
-            elif not teams[i] and teams[i + 1]:
-                score = "0-1"
-            else:
-                score = ""
-            match = Match(event=event, round=draw_size, match=match_number, team1=teams[i],
-                          team2=teams[i + 1], score=score)
+        if event.playoff:
+            match_number = Match.objects.filter(event__tournament=tournament).count() + 1
+            match = Match(event=event, round="3/4", match=match_number)
             match.save()
-            match_number += 1
-
             draw.append(format_match_return(match))
-        draw_size = draw_size // 2
 
-        while draw_size > 1:
-            for i in range(0, draw_size, 2):
-                match = Match(event=event, round=draw_size, match=match_number)
-                match.save()
-                match_number += 1
-
-                draw.append(format_match_return(match))
-            draw_size = draw_size // 2
-
-        for i in draw:
-            if i['team1'] == "Bye" or i['team2'] == "Bye":
-                bye_match = Match.objects.get(event=event, match=i['match'], no_match=True)
-                next_match = Match.objects.get(event=event,
-                                               match=map_next_match(bye_match.match, int(bye_match.round), event))
-                next_match.team1 = bye_match.team1 if bye_match.team1 else bye_match.team2
-                next_match.save()
-                for j in draw:
-                    if j['match'] == next_match.match:
-                        j['team1'] = str(next_match.team1)
-                        break
-    # TODO: Pools, Round Robin, Elimination Cons
     return {"draw": draw}
 
 
-# create playoff match if true
 @api.get("/tournament/{tournament_id}/events/{event_id}/manual_draw", auth=JWTAuth())
 def manual_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
     tournament, error = retrieve_tournament(tournament_id, request.user)
@@ -594,6 +538,10 @@ def manual_draw(request, tournament_id: str, event_id: str, draw_size: int = 0):
 
                 draw.append(format_match_return(match))
             draw_size = draw_size // 2
+        if event.playoff:
+            match = Match(event=event, round="3/4", match=match_number)
+            match.save()
+            draw.append(format_match_return(match))
     return {"draw": draw}
 
 
@@ -637,7 +585,7 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
     event, error = retrieve_event(tournament, event_id)
     if error:
         return error
-    match, error = retrieve_match(tournament, event, match_id)
+    match, error = retrieve_match(event, match_id)
     if error:
         return error
     return {
@@ -654,7 +602,7 @@ def match_detail(request, tournament_id: str, event_id: str, match_id: str):
     }
 
 
-# FIX: some logic problem here like team winning not aligning next round / no match if no opponent put to next match
+# Update only, no automatic workflow
 @api.put("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
 def update_match(request, tournament_id: str, event_id: str, match_id: str, match_schema: MatchSchema):
     tournament, error = retrieve_tournament(tournament_id, request.user)
@@ -663,7 +611,7 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
     event, error = retrieve_event(tournament, event_id)
     if error:
         return error
-    match, error = retrieve_match(tournament, event, match_id)
+    match, error = retrieve_match(event, match_id)
     if error:
         return error
     match.scheduled_start_time = datetime.strptime(match_schema.scheduled_start_time,
@@ -684,30 +632,29 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
     else:
         match.court = None
     if match_schema.score1:
-        if match_schema.score2:
-            if match_schema.score1 == match_schema.score2:
-                return {"error": "Score1 and Score2 must be different."}
-            match.score = str(match_schema.score1) + "-" + str(match_schema.score2)
-            if match_schema.score3:
-                if not match_schema.score4:
-                    return {"error": "Score4 is required."}
-                if match_schema.score5 and not match_schema.score6:
-                    return {"error": "Score6 is required."}
-                if match_schema.score3 == match_schema.score4:
-                    return {"error": "Score3 and Score4 must be different."}
-                if match_schema.score5 and match_schema.score5 == match_schema.score6:
-                    return {"error": "Score5 and Score6 must be different."}
-                if not match_schema.score5:
-                    match_schema.score5 = 0
-                    match_schema.score6 = 0
-                match.score += "," + str(match_schema.score3) + "-" + str(match_schema.score4)
-                if match_schema.score5:
-                    match.score += "," + str(match_schema.score5) + "-" + str(match_schema.score6)
-        else:
-            return {"error": "Score2 is required."}
+        if not match_schema.score2:
+            return {"error": "Score 2 is required."}
+        if match_schema.score1 == match_schema.score2:
+            return {"error": "Score 1 and Score 2 must be different."}
+        match.score = str(match_schema.score1) + "-" + str(match_schema.score2)
+        if match_schema.score3:
+            if not match_schema.score4:
+                return {"error": "Score 4 is required."}
+            if match_schema.score5 and not match_schema.score6:
+                return {"error": "Score 6 is required."}
+            if match_schema.score3 == match_schema.score4:
+                return {"error": "Score 3 and Score 4 must be different."}
+            if match_schema.score5 and match_schema.score5 == match_schema.score6:
+                return {"error": "Score 5 and Score 6 must be different."}
+            if match_schema.score1 == match_schema.score3 == match_schema.score5 or \
+                    match_schema.score2 == match_schema.score4 == match_schema.score6:
+                return {"error": "Score format error"}
+            match.score += "," + str(match_schema.score3) + "-" + str(match_schema.score4)
+            if match_schema.score5:
+                match.score += "," + str(match_schema.score5) + "-" + str(match_schema.score6)
     else:
         match.score = ""
-    match.no_match = match_schema.no_match
+    match.no_match = match_schema.no_match if match_schema.no_match else False
     match.note = match_schema.note
     match.save()
 
