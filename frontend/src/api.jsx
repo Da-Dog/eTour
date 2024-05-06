@@ -1,8 +1,18 @@
 import axios from 'axios';
 import Cookies from "js-cookie";
 
+const BASE_URL = 'http://127.0.0.1:8000';
+
+const getHeaders = () => {
+    let token = Cookies.get('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    };
+}
+
 export const login = async (email, password) => {
-    const response = await axios.post('http://127.0.0.1:8000/token/pair', {
+    const response = await axios.post(`${BASE_URL}/token/pair`, {
         'username': email,
         'password': password
     });
@@ -25,7 +35,7 @@ export const refresh = async () => {
     }
     let success = false;
     try {
-        const response = await axios.post('http://127.0.0.1:8000/token/refresh', {
+        const response = await axios.post(`${BASE_URL}/token/refresh`, {
             'refresh': refreshToken
         });
 
@@ -44,7 +54,7 @@ export const refresh = async () => {
 export const getTournamentList = async () => {
     let token = Cookies.get('token');
     try {
-        let response = await axios.get('http://127.0.0.1:8000/tournament', {
+        let response = await axios.get(`${BASE_URL}/tournament`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
@@ -63,9 +73,8 @@ export const getTournamentList = async () => {
 }
 
 export const createTournament = async (name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.post('http://127.0.0.1:8000/tournament', {
+        let response = await axios.post(`${BASE_URL}/tournament`, {
             'name': name,
             'description': description,
             'start_date': startDate,
@@ -79,10 +88,7 @@ export const createTournament = async (name, description, startDate, endDate, ad
             'contact_email': contactEmail,
             'contact_phone': contactPhone,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -97,13 +103,9 @@ export const createTournament = async (name, description, startDate, endDate, ad
 }
 
 export const deleteTournament = async (id) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${id}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.delete(`${BASE_URL}/tournament/${id}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -117,13 +119,9 @@ export const deleteTournament = async (id) => {
 }
 
 export const getTournament = async (id) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${id}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -137,9 +135,8 @@ export const getTournament = async (id) => {
 }
 
 export const editTournament = async (id, name, description, startDate, endDate, address1, address2, city, state, zipCode, contactName, contactEmail, contactPhone) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.put(`http://127.0.0.1:8000/tournament/${id}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${id}`, {
             'name': name,
             'description': description,
             'start_date': startDate,
@@ -153,10 +150,7 @@ export const editTournament = async (id, name, description, startDate, endDate, 
             'contact_email': contactEmail,
             'contact_phone': contactPhone,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -171,13 +165,9 @@ export const editTournament = async (id, name, description, startDate, endDate, 
 }
 
 export const getTournamentDashboard = async (id) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}/dashboard`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${id}/dashboard`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -191,13 +181,9 @@ export const getTournamentDashboard = async (id) => {
 }
 
 export const getTournamentPlayers = async (id) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${id}/participants`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${id}/participants`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -211,9 +197,8 @@ export const getTournamentPlayers = async (id) => {
 }
 
 export const addPlayer = async (id, player) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.post(`http://127.0.0.1:8000/tournament/${id}/participants`, {
+        let response = await axios.post(`${BASE_URL}/tournament/${id}/participants`, {
             "first_name": player.first_name,
             "middle_name": player.middle_name ? player.middle_name : null,
             "last_name": player.last_name,
@@ -223,10 +208,7 @@ export const addPlayer = async (id, player) => {
             "gender": player.gender,
             "notes": player.notes ? player.notes : null,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -240,13 +222,9 @@ export const addPlayer = async (id, player) => {
 }
 
 export const getPlayer = async (tournamentId, playerId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/participants/${playerId}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -260,9 +238,8 @@ export const getPlayer = async (tournamentId, playerId) => {
 }
 
 export const updatePlayer = async (tournamentId, playerId, player) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/participants/${playerId}`, {
             "first_name": player.first_name,
             "middle_name": player.middle_name ? player.middle_name : null,
             "last_name": player.last_name,
@@ -272,10 +249,7 @@ export const updatePlayer = async (tournamentId, playerId, player) => {
             "gender": player.gender,
             "notes": player.notes ? player.notes : null,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -287,13 +261,9 @@ export const updatePlayer = async (tournamentId, playerId, player) => {
 }
 
 export const deletePlayer = async (tournamentId, playerId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${playerId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.delete(`${BASE_URL}/tournament/${tournamentId}/participants/${playerId}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -305,13 +275,9 @@ export const deletePlayer = async (tournamentId, playerId) => {
 }
 
 export const getPlayerEntries = async (tournamentId, participantId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/participants/${participantId}/entries`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/participants/${participantId}/entries`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -325,13 +291,9 @@ export const getPlayerEntries = async (tournamentId, participantId) => {
 }
 
 export const getEvents = async (tournamentId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -345,9 +307,8 @@ export const getEvents = async (tournamentId) => {
 }
 
 export const addEvent = async (tournamentId, event) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.post(`http://127.0.0.1:8000/tournament/${tournamentId}/events`, {
+        let response = await axios.post(`${BASE_URL}/tournament/${tournamentId}/events`, {
             name: event.name,
             type: event.type,
             gender: event.gender,
@@ -359,10 +320,7 @@ export const addEvent = async (tournamentId, event) => {
             consolation: event.consolation,
             full_feed_last_round: event.full_feed_last_round ? event.full_feed_last_round : null
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -376,13 +334,9 @@ export const addEvent = async (tournamentId, event) => {
 }
 
 export const getEvent = async (tournamentId, eventId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}`, {
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -396,9 +350,8 @@ export const getEvent = async (tournamentId, eventId) => {
 }
 
 export const updateEvent = async (tournamentId, eventId, event) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}`, {
             name: event.name,
             type: event.type,
             gender: event.gender,
@@ -410,10 +363,7 @@ export const updateEvent = async (tournamentId, eventId, event) => {
             consolation: event.consolation,
             full_feed_last_round: event.full_feed_last_round ? event.full_feed_last_round : null
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -427,13 +377,9 @@ export const updateEvent = async (tournamentId, eventId, event) => {
 }
 
 export const deleteEvent = async (tournamentId, eventId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.delete(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -447,17 +393,13 @@ export const deleteEvent = async (tournamentId, eventId) => {
 }
 
 export const addEntry = async (tournamentId, eventId, entry) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.post(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries`, {
+        let response = await axios.post(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/entries`, {
             participant: entry.player,
             partner: entry.partner ? entry.partner : null,
             seed: entry.seeding ? entry.seeding : null,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -471,17 +413,13 @@ export const addEntry = async (tournamentId, eventId, entry) => {
 }
 
 export const updateEntry = async (tournamentId, eventId, entry) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries/${entry.entry_id}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/entries/${entry.entry_id}`, {
             participant: entry.player,
             partner: entry.partner ? entry.partner : null,
             seed: entry.seed ? entry.seed : null,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -495,13 +433,9 @@ export const updateEntry = async (tournamentId, eventId, entry) => {
 }
 
 export const deleteEntry = async (tournamentId, eventId, entryId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.delete(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/entries/${entryId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.delete(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/entries/${entryId}`, {
+            headers: getHeaders(),
         });
 
         if (response.status !== 200) {
@@ -516,13 +450,9 @@ export const deleteEntry = async (tournamentId, eventId, entryId) => {
 }
 
 export const autoDraw = async (tournamentId, eventId, drawSize) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/auto_draw`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/auto_draw`, {
+            headers: getHeaders(),
             params: {draw_size: drawSize}
         });
 
@@ -537,13 +467,9 @@ export const autoDraw = async (tournamentId, eventId, drawSize) => {
 }
 
 export const getMatches = async (tournamentId, eventId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/matches`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/matches`, {
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -557,13 +483,9 @@ export const getMatches = async (tournamentId, eventId) => {
 }
 
 export const getEventBracket = async (tournamentId, eventId) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/bracket`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/bracket`, {
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -577,13 +499,9 @@ export const getEventBracket = async (tournamentId, eventId) => {
 }
 
 export const getMatch = async (tournamentId, eventId, match) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/match/${match}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/match/${match}`, {
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {
@@ -597,13 +515,9 @@ export const getMatch = async (tournamentId, eventId, match) => {
 }
 
 export const manualDraw = async (tournamentId, eventId, drawSize) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.get(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/manual_draw`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+        let response = await axios.get(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/manual_draw`, {
+            headers: getHeaders(),
             params: {draw_size: drawSize}
         });
 
@@ -618,9 +532,8 @@ export const manualDraw = async (tournamentId, eventId, drawSize) => {
 }
 
 export const updateMatch = async (tournamentId, eventId, match) => {
-    let token = Cookies.get('token');
     try {
-        let response = await axios.put(`http://127.0.0.1:8000/tournament/${tournamentId}/events/${eventId}/match/${match.match}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/match/${match.match}`, {
             court: match.court ? match.court : null,
             team1: match.team1 ? match.team1 : null,
             team2: match.team2 ? match.team2 : null,
@@ -634,10 +547,7 @@ export const updateMatch = async (tournamentId, eventId, match) => {
             note: match.note ? match.note : null,
             no_match: match.no_match ? match.no_match : null,
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: getHeaders()
         });
 
         if (response.status !== 200) {

@@ -1,7 +1,7 @@
 import {
     Box,
     Button,
-    Checkbox, Divider,
+    Checkbox,
     Flex,
     FormControl,
     FormHelperText,
@@ -33,7 +33,7 @@ import {
 } from "@chakra-ui/react";
 import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
-import {FaHammer, FaPlus, FaPrint, FaRandom} from "react-icons/fa";
+import {FaHammer, FaPlus, FaRandom} from "react-icons/fa";
 import {useEffect, useState} from "react";
 import {
     addEntry,
@@ -46,6 +46,7 @@ import {
     updateEntry,
     updateEvent, updateMatch
 } from "../api.jsx";
+import DrawTab from "./eventDetailTabs/drawTab.jsx";
 
 function EventDetail() {
     const {id, event_id} = useParams();
@@ -681,59 +682,7 @@ function EventDetail() {
                         </Table>
                     </TabPanel>
                     <TabPanel>
-                        <Flex flexDirection="row" h="100%" mt={5} justify='space-around' id="bracketSection">
-                            {bracketData.map((round, index) => (
-                                <Box key={index} ml={5} mr={75}>
-                                    <Flex justifyContent="center" alignItems="center" mb={5}>
-                                        <Text as='b'>{round.round}</Text>
-                                    </Flex>
-                                    <VStack align='stretch' justify='space-around' spacing={5} h="100%" key={index}>
-                                        {round.matches.map((match, index) => (
-                                            <Box key={index} borderWidth="3px" borderRadius="lg" mb={3}
-                                                 _hover={{backgroundColor: 'gray.200'}} style={{cursor: "pointer"}}
-                                                 onClick={() => handleOpenMatch(match.id)} h='150px'>
-                                                <Box p="6">
-                                                    <Box d="flex" alignItems="baseline">
-                                                        <Box
-                                                            color="gray.500"
-                                                            fontWeight="semibold"
-                                                            letterSpacing="wide"
-                                                            fontSize="xs"
-                                                            textTransform="uppercase"
-                                                            ml="2"
-                                                        >
-                                                            Match ID: {match.id}
-                                                        </Box>
-                                                    </Box>
-
-                                                    <Box
-                                                        mt="1"
-                                                        fontWeight="semibold"
-                                                        as="h4"
-                                                        lineHeight="tight"
-                                                        isTruncated
-                                                    >
-                                                        {match.team1 ? match.team1 : <br/>}
-                                                        <Divider mt={1} mb={1}/>
-                                                        {match.team2 ? match.team2 : <br/>}
-                                                    </Box>
-
-                                                    {match.no_match ?
-                                                        <Box as="span" color="red.600" fontSize="sm">
-                                                            No Match
-                                                        </Box>
-                                                        : match.score && (
-                                                        <Box as="span" color="gray.600" fontSize="sm">
-                                                            {match.score.replaceAll(',', ', ')}
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        ))}
-                                    </VStack>
-                                </Box>
-                            ))}
-                        </Flex>
+                        {bracketData.length > 0 ? <DrawTab bracketData={bracketData} handleOpenMatch={handleOpenMatch}/> : <></>}
                     </TabPanel>
                     <TabPanel>
                         <Table variant="simple">
