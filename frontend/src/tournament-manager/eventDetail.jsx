@@ -33,7 +33,7 @@ import {
 } from "@chakra-ui/react";
 import Select from "react-select";
 import {useNavigate, useParams} from "react-router-dom";
-import {FaHammer, FaPlus, FaRandom} from "react-icons/fa";
+import {FaHammer, FaPlus, FaRandom, FaTrash} from "react-icons/fa";
 import {useEffect, useState} from "react";
 import {
     addEntry,
@@ -42,7 +42,7 @@ import {
     deleteEvent,
     getEvent,
     getEventBracket, getMatch,
-    getMatches, manualDraw,
+    getMatches, manualDraw, removeAllDraws,
     updateEntry,
     updateEvent, updateMatch
 } from "../api.jsx";
@@ -93,6 +93,7 @@ function EventDetail() {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose} = useDisclosure();
     const {isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose} = useDisclosure();
+    const {isOpen: isRemoveDrawOpen, onOpen: onRemoveDrawOpen, onClose: onRemoveDrawClose} = useDisclosure();
 
     const [players, setPlayers] = useState([]);
     const [entriesSelect, setEntriesSelect] = useState([]);
@@ -120,6 +121,12 @@ function EventDetail() {
     const handleDeleteConfirm = () => {
         deleteEvent(id, event_id).then(() => {
             navigate('/tm/' + id + '/event');
+        });
+    }
+
+    const handleRemoveDraw = () => {
+        removeAllDraws(id, event_id).then(() => {
+            location.reload();
         });
     }
 
@@ -359,6 +366,28 @@ function EventDetail() {
                 </ModalContent>
             </Modal>
 
+            <Modal isOpen={isRemoveDrawOpen} onClose={onRemoveDrawClose}>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Confirm Remove Draw</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        Are you sure you want to remove the draw for this event? This action can not be undone!
+                        <br/><br/>
+                        All matches in the draw, results and schedule will be removed.
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button colorScheme="blue" mr={3} onClick={onRemoveDrawClose}>
+                            Cancel
+                        </Button>
+                        <Button variant="ghost" colorScheme="red" onClick={handleRemoveDraw}>
+                            Confirm
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
             <Modal isOpen={isEntryOpen} onClose={onEntryClose} size='lg'>
                 <ModalOverlay/>
                 <ModalContent>
@@ -542,6 +571,11 @@ function EventDetail() {
                             Auto Draw
                         </Button>
                     </> : <></>
+                }
+                {tabIndex === 2 && matches ?
+                    <Button colorScheme="red" leftIcon={<FaTrash/>} onClick={onRemoveDrawOpen}>
+                        Remove Draw
+                    </Button> : <></>
                 }
                 {tabIndex === 3 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onMatchOpen}>

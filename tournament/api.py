@@ -344,7 +344,7 @@ def delete_event(request, tournament_id: str, event_id: str):
     tournament, error = retrieve_tournament(tournament_id, request.user)
     if error:
         return error
-    event, error = retrieve_event(event_id, request.user)
+    event, error = retrieve_event(tournament, event_id)
     if error:
         return error
     event.delete()
@@ -659,3 +659,17 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
     match.save()
 
     return format_match_return(match)
+
+
+@api.delete("/tournament/{tournament_id}/events/{event_id}/remove_draws", auth=JWTAuth())
+def remove_draws(request, tournament_id: str, event_id: str):
+    tournament, error = retrieve_tournament(tournament_id, request.user)
+    if error:
+        return error
+    event, error = retrieve_event(tournament, event_id)
+    if error:
+        return error
+    matches = event.match_set.all()
+    for match in matches:
+        match.delete()
+    return {"success": True}

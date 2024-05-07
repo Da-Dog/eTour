@@ -101,7 +101,7 @@ def format_match_return(match):
     duration_str, team1, team2 = get_team_time(match)
 
     return {
-        "round": ROUND_CHOICES.get(match.round, match.round),
+        "round": ROUND_CHOICES.get(str(match.round), match.round),
         "time": match.scheduled_start_time.strftime("%Y-%m-%d %H:%M") if match.scheduled_start_time else "",
         "match": match.match if match.match else "",
         "team1": team1,

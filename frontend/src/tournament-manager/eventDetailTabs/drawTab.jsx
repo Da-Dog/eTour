@@ -1,5 +1,4 @@
 import {Box, Divider, Flex, Text, VStack} from "@chakra-ui/react";
-import './drawTab.css';
 
 function DrawTab({bracketData, handleOpenMatch}) {
 
@@ -12,10 +11,9 @@ function DrawTab({bracketData, handleOpenMatch}) {
                     </Flex>
                     <VStack align='stretch' justify='space-around' spacing={2} h="100%" key={index}>
                         {round.matches.map((match, matchIndex) => (
-                            // TODO: Figure out how to connect boxes with lines
                             <Box key={matchIndex} borderWidth="3px" borderRadius="lg"
                                  _hover={{backgroundColor: 'gray.200'}} style={{cursor: "pointer"}}
-                                 onClick={() => handleOpenMatch(match.id)} h='150px' className={matchIndex % 2 === 0 ? "boxWithLine boxWithLineDown" : "boxWithLine boxWithLineUp"}>
+                                 onClick={() => handleOpenMatch(match.id)} h='150px'>
                                 <Box p="6">
                                     <Box d="flex" alignItems="baseline">
                                         <Box
