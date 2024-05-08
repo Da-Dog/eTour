@@ -591,3 +591,21 @@ export const deleteMatch = async (tournamentId, eventId, matchId) => {
         alert(error);
     }
 }
+
+export const updateDrawStatus = async (tournamentId, eventId, status) => {
+    try {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/draw_status`, {
+            status: status
+        }, {
+            headers: getHeaders()
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to update draw status");
+        } else {
+            return status
+        }
+    } catch (error) {
+        alert(error);
+    }
+}

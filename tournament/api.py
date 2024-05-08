@@ -5,7 +5,7 @@ from ninja_jwt.controller import NinjaJWTDefaultController
 from datetime import datetime
 
 from .models import Participant, Tournament, Entry, Event, Match
-from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema, MatchSchema
+from .schema import TournamentSchema, ParticipantSchema, EventSchema, EntrySchema, MatchSchema, DrawUpdateSchema
 from .utils import map_next_match, get_team_time, retrieve_event, retrieve_entry, retrieve_tournament, \
     retrieve_participant, retrieve_match, format_match_return, create_matches_elimination, fill_teams_elimination
 
@@ -574,7 +574,7 @@ def get_event_bracket(request, tournament_id: str, event_id: str):
             "score": match.score if match.score else "",
             "no_match": match.no_match,
         })
-    return {"draw": draw}
+    return {"draw": draw, "status": event.draw_status}
 
 
 @api.get("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
@@ -692,3 +692,19 @@ def delete_match(request, tournament_id: str, event_id: str, match_id: str):
         return error
     match.delete()
     return {"message": "Match deleted successfully!"}
+
+
+@api.put("/tournament/{tournament_id}/events/{event_id}/draw_status", auth=JWTAuth())
+def finalize_draw(request, tournament_id: str, event_id: str, schema: DrawUpdateSchema):
+    tournament, error = retrieve_tournament(tournament_id, request.user)
+    if error:
+        return error
+    event, error = retrieve_event(tournament, event_id)
+    if error:
+        return error
+    draw_status = schema.status
+    if draw_status not in ["F", "T", "P"]:
+        return {"error": "Invalid draw status."}
+    event.draw_status = draw_status
+    event.save()
+    return {"message": "Draw status updated successfully!"}

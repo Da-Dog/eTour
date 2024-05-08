@@ -63,3 +63,7 @@ class MatchSchema(Schema):
     scheduled_start_time: Optional[str] = Field(None)
     note: Optional[str] = Field(None)
     no_match: Optional[bool] = Field(None)
+
+
+class DrawUpdateSchema(Schema):
+    status: Optional[str] = Field(None)

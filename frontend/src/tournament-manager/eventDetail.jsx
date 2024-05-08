@@ -42,7 +42,7 @@ import {
     deleteEvent, deleteMatch,
     getEvent,
     getEventBracket, getMatch,
-    getMatches, manualDraw, removeAllDraws,
+    getMatches, manualDraw, removeAllDraws, updateDrawStatus,
     updateEntry,
     updateEvent, updateMatch
 } from "../api.jsx";
@@ -90,6 +90,7 @@ function EventDetail() {
 
     const [tabIndex, setTabIndex] = useState(0);
     const [drawSize, setDrawSize] = useState(2);
+    const [drawStatus, setDrawStatus] = useState('P');
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {isOpen: isMatchOpen, onOpen: onMatchOpen, onClose: onMatchClose} = useDisclosure();
     const {isOpen: isEntryOpen, onOpen: onEntryOpen, onClose: onEntryClose} = useDisclosure();
@@ -101,6 +102,12 @@ function EventDetail() {
     const navigate = useNavigate();
 
     const [bracketData, setBracketData] = useState([]);
+
+    const handleUpdateDrawStatus = (e) => {
+        updateDrawStatus(id, event_id, e.target.value).then(status => {
+            setDrawStatus(status);
+        });
+    }
 
     const handleCreateAdditionalMatch = () => {
         setMatch({
@@ -233,6 +240,7 @@ function EventDetail() {
                 setMatches(response.draw);
                 getEventBracket(id, event_id).then(response => {
                     setBracketData(response.draw);
+                    setDrawStatus(response.status);
                 });
             }
         });
@@ -246,6 +254,7 @@ function EventDetail() {
                 setMatches(response.draw);
                 getEventBracket(id, event_id).then(response => {
                     setBracketData(response.draw);
+                    setDrawStatus(response.status);
                 });
             }
         });
@@ -310,6 +319,7 @@ function EventDetail() {
                 }
                 getEventBracket(id, event_id).then(response => {
                     setBracketData(response.draw);
+                    setDrawStatus(response.status);
                 });
                 onMatchClose();
             }
@@ -323,6 +333,7 @@ function EventDetail() {
                 if (match.round !== 'A') {
                     getEventBracket(id, event_id).then(response => {
                         setBracketData(response.draw);
+                        setDrawStatus(response.status);
                     });
                 }
                 onMatchClose();
@@ -369,6 +380,7 @@ function EventDetail() {
         });
         getEventBracket(id, event_id).then(response => {
             setBracketData(response.draw);
+            setDrawStatus(response.status);
         });
     }, [event_id, id]);
 
@@ -596,16 +608,16 @@ function EventDetail() {
                         <b>Size:</b><ChakraSelect name='drawSize' value={drawSize}
                                                   onChange={(e) => setDrawSize(parseInt(e.target.value))} w='15%'
                                                   ml={1}>
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="8">8</option>
-                        <option value="16">16</option>
-                        <option value="32">32</option>
-                        <option value="64">64</option>
-                        <option value="128">128</option>
-                        <option value="256">256</option>
-                        <option value="512">512</option>
-                    </ChakraSelect>
+                            <option value="2">2</option>
+                            <option value="4">4</option>
+                            <option value="8">8</option>
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128">128</option>
+                            <option value="256">256</option>
+                            <option value="512">512</option>
+                        </ChakraSelect>
                         <Button colorScheme="blue" leftIcon={<FaHammer/>} ml={2} pl={6} pr={6}
                                 onClick={handleManualDraw}>
                             Manual Draw
@@ -616,9 +628,18 @@ function EventDetail() {
                     </> : <></>
                 }
                 {tabIndex === 2 && matches ?
-                    <Button colorScheme="red" leftIcon={<FaTrash/>} onClick={onRemoveDrawOpen}>
-                        Remove Draw
-                    </Button> : <></>
+                    <>
+                        <b>Status:</b><ChakraSelect value={drawStatus}
+                                                    onChange={handleUpdateDrawStatus}
+                                                    ml={1} w='10%'>
+                            <option value="P">Pending</option>
+                            <option value="T">Tentative</option>
+                            <option value="F">Finalized</option>
+                        </ChakraSelect>
+                        <Button colorScheme="red" leftIcon={<FaTrash/>} onClick={onRemoveDrawOpen} ml={2}>
+                            Remove Draw
+                        </Button>
+                    </> : <></>
                 }
                 {tabIndex === 3 ?
                     <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={handleCreateAdditionalMatch}>
@@ -642,7 +663,7 @@ function EventDetail() {
                                 <Input name='name' value={event.name} onChange={handleInputChange}/>
                             </FormControl>
                             <FormControl>
-                                <FormLabel>Gender</FormLabel>
+                            <FormLabel>Gender</FormLabel>
                                 <ChakraSelect name='gender' value={event.gender} onChange={handleInputChange}>
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
