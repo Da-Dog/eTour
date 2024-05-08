@@ -575,3 +575,19 @@ export const removeAllDraws = async (tournamentId, eventId) => {
         alert(error);
     }
 }
+
+export const deleteMatch = async (tournamentId, eventId, matchId) => {
+    try {
+        let response = await axios.delete(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/match/${matchId}`, {
+            headers: getHeaders()
+        });
+
+        if (response.status !== 200) {
+            alert("Failed to delete match");
+        } else {
+            return response.data;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}

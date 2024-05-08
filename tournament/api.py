@@ -398,7 +398,7 @@ def entry_detail(request, tournament_id: str, event_id: str, entry_id: str):
     tournament, error = retrieve_tournament(tournament_id, request.user)
     if error:
         return error
-    entry, error = retrieve_entry(tournament, event_id, entry_id)
+    entry, error = retrieve_entry(event_id, entry_id)
     if error:
         return error
     return {
@@ -416,7 +416,7 @@ def update_entry(request, tournament_id: str, event_id: str, entry_id: str, entr
     event, error = retrieve_event(tournament, event_id)
     if error:
         return error
-    entry, error = retrieve_entry(tournament, event, entry_id)
+    entry, error = retrieve_entry(event, entry_id)
     if error:
         return error
     if event.type == "S":
@@ -447,7 +447,7 @@ def delete_entry(request, tournament_id: str, event_id: str, entry_id: str):
     tournament, error = retrieve_tournament(tournament_id, request.user)
     if error:
         return error
-    entry, error = retrieve_entry(tournament, event_id, entry_id)
+    entry, error = retrieve_entry(event_id, entry_id)
     if error:
         return error
     entry.delete()
@@ -616,7 +616,7 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
         if error:
             return error
     else:
-        match = Match(event=event)
+        match = Match(event=event, round="A")
         match.match = Match.objects.filter(event=event).count() + 1
     match.scheduled_start_time = datetime.strptime(match_schema.scheduled_start_time,
                                                    "%Y-%m-%dT%H:%M") if match_schema.scheduled_start_time else None
@@ -677,3 +677,18 @@ def remove_draws(request, tournament_id: str, event_id: str):
     for match in matches:
         match.delete()
     return {"success": True}
+
+
+@api.delete("/tournament/{tournament_id}/events/{event_id}/match/{match_id}", auth=JWTAuth())
+def delete_match(request, tournament_id: str, event_id: str, match_id: str):
+    tournament, error = retrieve_tournament(tournament_id, request.user)
+    if error:
+        return error
+    event, error = retrieve_event(tournament, event_id)
+    if error:
+        return error
+    match, error = retrieve_match(event, match_id)
+    if error:
+        return error
+    match.delete()
+    return {"message": "Match deleted successfully!"}

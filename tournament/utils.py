@@ -13,6 +13,7 @@ ROUND_CHOICES = {
     "128": "Round 128",
     "256": "Round 256",
     "512": "Round 512",
+    "A": "Additional",
 }
 
 
@@ -85,8 +86,8 @@ def retrieve_event(tournament, event_id):
     return get_object_or_error(Event, tournament=tournament, id=event_id)
 
 
-def retrieve_entry(tournament, event, entry_id):
-    return get_object_or_error(Entry, tournament=tournament, event=event, id=entry_id)
+def retrieve_entry(event, entry_id):
+    return get_object_or_error(Entry, event=event, id=entry_id)
 
 
 def retrieve_participant(tournament, participant_id):

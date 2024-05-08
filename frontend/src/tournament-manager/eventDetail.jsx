@@ -39,7 +39,7 @@ import {
     addEntry,
     autoDraw,
     deleteEntry,
-    deleteEvent,
+    deleteEvent, deleteMatch,
     getEvent,
     getEventBracket, getMatch,
     getMatches, manualDraw, removeAllDraws,
@@ -316,6 +316,20 @@ function EventDetail() {
         });
     }
 
+    const handleMatchDelete = () => {
+        deleteMatch(id, event_id, match.match).then(response => {
+            if (response) {
+                setMatches(matches.filter(matchElement => matchElement.match !== match.match));
+                if (match.round !== 'A') {
+                    getEventBracket(id, event_id).then(response => {
+                        setBracketData(response.draw);
+                    });
+                }
+                onMatchClose();
+            }
+        });
+    }
+
     useEffect(() => {
         getEvent(id, event_id).then(response => {
             setEvent({
@@ -445,7 +459,7 @@ function EventDetail() {
                             ) : <></>}
                             <FormControl>
                                 <FormLabel>Seeding</FormLabel>
-                                <Input type='number' name='seed' value={entry.seed}
+                                <Input type='number' name='seed' value={entry.seed ? entry.seed : ""}
                                        onChange={(e) => setEntry({...entry, seed: e.target.value})}/>
                             </FormControl>
                         </VStack>
@@ -557,6 +571,9 @@ function EventDetail() {
                     </ModalBody>
 
                     <ModalFooter>
+                        {match.match ? <Button variant="ghost" colorScheme="red" mr="auto" onDoubleClick={handleMatchDelete}>
+                            Delete
+                        </Button> : <></>}
                         <Button variant="ghost" mr={3} onClick={onMatchClose}>
                             Cancel
                         </Button>
