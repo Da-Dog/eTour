@@ -611,9 +611,13 @@ def update_match(request, tournament_id: str, event_id: str, match_id: str, matc
     event, error = retrieve_event(tournament, event_id)
     if error:
         return error
-    match, error = retrieve_match(event, match_id)
-    if error:
-        return error
+    if match_id != "new":
+        match, error = retrieve_match(event, match_id)
+        if error:
+            return error
+    else:
+        match = Match(event=event)
+        match.match = Match.objects.filter(event=event).count() + 1
     match.scheduled_start_time = datetime.strptime(match_schema.scheduled_start_time,
                                                    "%Y-%m-%dT%H:%M") if match_schema.scheduled_start_time else None
     try:

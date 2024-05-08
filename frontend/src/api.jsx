@@ -533,7 +533,7 @@ export const manualDraw = async (tournamentId, eventId, drawSize) => {
 
 export const updateMatch = async (tournamentId, eventId, match) => {
     try {
-        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/match/${match.match}`, {
+        let response = await axios.put(`${BASE_URL}/tournament/${tournamentId}/events/${eventId}/match/${match.match ? match.match : "new"}`, {
             court: match.court ? match.court : null,
             team1: match.team1 ? match.team1 : null,
             team2: match.team2 ? match.team2 : null,

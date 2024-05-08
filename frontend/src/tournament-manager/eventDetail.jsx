@@ -102,6 +102,26 @@ function EventDetail() {
 
     const [bracketData, setBracketData] = useState([]);
 
+    const handleCreateAdditionalMatch = () => {
+        setMatch({
+            match: '',
+            round: 'A',
+            court: '',
+            team1: '',
+            team2: '',
+            score1: '',
+            score2: '',
+            score3: '',
+            score4: '',
+            score5: '',
+            score6: '',
+            scheduled_time: '',
+            note: '',
+            no_match: false,
+        });
+        onMatchOpen();
+    }
+
     const handleInputChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
         setEvent({
@@ -276,12 +296,18 @@ function EventDetail() {
             if (response.error) {
                 alert(response.error);
             } else {
+                let matchUpdated = false;
                 setMatches(matches.map(matchElement => {
                     if (matchElement.match === match.match) {
+                        matchUpdated = true;
                         return response
                     }
                     return matchElement;
                 }));
+
+                if (!matchUpdated) {
+                    setMatches([...matches, response]);
+                }
                 getEventBracket(id, event_id).then(response => {
                     setBracketData(response.draw);
                 });
@@ -578,7 +604,7 @@ function EventDetail() {
                     </Button> : <></>
                 }
                 {tabIndex === 3 ?
-                    <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={onMatchOpen}>
+                    <Button colorScheme="teal" leftIcon={<FaPlus/>} onClick={handleCreateAdditionalMatch}>
                         New Match
                     </Button> : <></>
                 }
